@@ -1,0 +1,1 @@
+mozilla-b2g/run-gdb.sh

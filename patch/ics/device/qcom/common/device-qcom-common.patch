@@ -1,0 +1,19 @@
+
+---
+ common.mk |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/common.mk b/common.mk
+index 744a9ea..e4c2505 100755
+--- a/common.mk
++++ b/common.mk
+@@ -478,3 +478,6 @@ PRODUCT_PRIVATE_KEY := device/qcom/common/qcom.key
+ $(call inherit-product, frameworks/base/build/phone-xhdpi-1024-dalvik-heap.mk)
+ $(call inherit-product, frameworks/base/data/fonts/fonts.mk)
+ $(call inherit-product, frameworks/base/data/keyboards/keyboards.mk)
++$(call inherit-product, device/qcom/b2g_common/b2g_product.mk)
++include device/qcom/b2g_common/keymaps/keymaps.mk
++TARGET_PROVIDES_B2G_INIT_RC=true
+-- 
+1.7.6
+

@@ -1,0 +1,15 @@
+#!/bin/sh
+
+echo jar fake 1.6.0
+
+while [[ -n "$1" ]]; do
+   if [[ "${1%%.jar}" != "$1" ]]; then
+      touch dummy
+      zip -q $1 dummy
+   fi
+   if [[ "${1%%.apk}" != "$1" ]]; then
+      touch dummy
+      zip -q $1 dummy
+   fi
+   shift
+done

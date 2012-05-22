@@ -1,0 +1,1 @@
+mozilla-b2g/flash.sh

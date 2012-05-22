@@ -1,0 +1,11 @@
+#!/bin/sh
+
+echo Fake dx.
+
+while [[ -n "$1" ]]; do
+   if [[ "${1#--output=}" != "$1" ]]; then
+      echo touch ${1#--output=}
+      touch ${1#--output=}
+   fi
+   shift
+done

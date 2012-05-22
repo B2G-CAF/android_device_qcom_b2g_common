@@ -1,0 +1,16 @@
+diff --git a/rootdir/etc/init.qcom.rc b/rootdir/etc/init.qcom.rc
+index c11c0c9..ed273a9 100755
+--- a/rootdir/etc/init.qcom.rc
++++ b/rootdir/etc/init.qcom.rc
+@@ -244,7 +244,7 @@ service wpa_supplicant /system/bin/logwrapper /system/bin/wpa_supplicant -Dwext
+     disabled
+     oneshot
+ 
+-service dhcpcd_wlan0 /system/bin/dhcpcd -BKLG wlan0
++service dhcpcd_wlan0 /system/bin/dhcpcd -BKL wlan0
+     disabled
+     oneshot
+ 
+-- 
+1.7.8.3
+

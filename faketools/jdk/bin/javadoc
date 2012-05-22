@@ -1,0 +1,3 @@
+#!/bin/sh
+
+echo javadoc fake 1.6.0

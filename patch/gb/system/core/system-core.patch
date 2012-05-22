@@ -1,0 +1,46 @@
+diff --git a/include/private/android_filesystem_config.h b/include/private/android_filesystem_config.h
+index 176f306..778a9d3 100755
+--- a/include/private/android_filesystem_config.h
++++ b/include/private/android_filesystem_config.h
+@@ -163,6 +163,8 @@ static struct fs_path_config android_dirs[] = {
+ ** and will allow partial matches.
+ */
+ static struct fs_path_config android_files[] = {
++    { 00775, AID_ROOT,      AID_ROOT,      "system/b2g/b2g" },
++    { 00775, AID_ROOT,      AID_ROOT,      "system/b2g/updater" },
+     { 00440, AID_ROOT,      AID_SHELL,     "system/etc/init.goldfish.rc" },
+     { 00550, AID_ROOT,      AID_SHELL,     "system/etc/init.goldfish.sh" },
+     { 00755, AID_SYSTEM,      AID_SYSTEM,      "system/etc/init.qcom.sdio.sh" },
+diff --git a/rootdir/init.rc b/rootdir/init.rc
+index 051f8cb..3af5d32 100644
+--- a/rootdir/init.rc
++++ b/rootdir/init.rc
+@@ -1,5 +1,6 @@
+ on early-init
+     start ueventd
++    import /init.b2g.rc
+ 
+ on init
+ 
+@@ -9,7 +10,9 @@ loglevel 3
+ 
+ # setup the global environment
+     export PATH /sbin:/vendor/bin:/system/sbin:/system/bin:/system/xbin
+-    export LD_LIBRARY_PATH /vendor/lib:/system/lib
++    export TMPDIR /data/local/tmp
++    export LD_LIBRARY_PATH /vendor/lib:/system/lib:/system/b2g
++    export GRE_HOME /system/b2g
+     export ANDROID_BOOTLOGO 1
+     export ANDROID_ROOT /system
+     export ANDROID_ASSETS /system/app
+@@ -317,6 +320,7 @@ on boot
+     write /proc/sys/net/core/wmem_max  1220608
+ 
+     class_start default
++    class_start main
+ 
+ ## Daemon processes to be run by init.
+ ##
+-- 
+1.7.8.3
+

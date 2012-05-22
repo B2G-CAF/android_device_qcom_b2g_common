@@ -1,0 +1,3 @@
+#!/bin/sh
+
+echo javac fake 1.6.0

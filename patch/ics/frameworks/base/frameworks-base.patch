@@ -1,0 +1,105 @@
+diff --git a/Android.mk b/Android.mk
+index 62bb2e5..2819ad6 100644
+--- a/Android.mk
++++ b/Android.mk
+@@ -227,6 +227,7 @@ LOCAL_NO_STANDARD_LIBRARIES := true
+ LOCAL_JAVA_LIBRARIES := bouncycastle core core-junit ext
+ 
+ LOCAL_MODULE := framework
++LOCAL_MODULE_TAGS := optional
+ LOCAL_MODULE_CLASS := JAVA_LIBRARIES
+ 
+ LOCAL_NO_EMMA_INSTRUMENT := true
+diff --git a/cmds/app_process/Android.mk b/cmds/app_process/Android.mk
+index 2391b72..6f033b5 100644
+--- a/cmds/app_process/Android.mk
++++ b/cmds/app_process/Android.mk
+@@ -1,5 +1,6 @@
+ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_SRC_FILES:= \
+ 	app_main.cpp
+diff --git a/cmds/stagefright/Android.mk b/cmds/stagefright/Android.mk
+index bf2c41f..e76640e 100644
+--- a/cmds/stagefright/Android.mk
++++ b/cmds/stagefright/Android.mk
+@@ -1,6 +1,7 @@
+ LOCAL_PATH:= $(call my-dir)
+ 
+ include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_SRC_FILES:=       \
+ 	stagefright.cpp \
+diff --git a/cmds/surfaceflinger/Android.mk b/cmds/surfaceflinger/Android.mk
+index 1df32bb..aa290b8 100644
+--- a/cmds/surfaceflinger/Android.mk
++++ b/cmds/surfaceflinger/Android.mk
+@@ -1,5 +1,6 @@
+ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_SRC_FILES:= \
+ 	main_surfaceflinger.cpp 
+diff --git a/cmds/system_server/Android.mk b/cmds/system_server/Android.mk
+index ad53797..c0db0f0 100644
+--- a/cmds/system_server/Android.mk
++++ b/cmds/system_server/Android.mk
+@@ -1,5 +1,6 @@
+ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_SRC_FILES:= \
+ 	system_main.cpp
+diff --git a/cmds/system_server/library/Android.mk b/cmds/system_server/library/Android.mk
+index e8afce3..615b52d 100644
+--- a/cmds/system_server/library/Android.mk
++++ b/cmds/system_server/library/Android.mk
+@@ -1,5 +1,6 @@
+ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_SRC_FILES:= \
+ 	system_init.cpp
+diff --git a/services/java/Android.mk b/services/java/Android.mk
+index dffc467..e02f16e 100644
+--- a/services/java/Android.mk
++++ b/services/java/Android.mk
+@@ -12,6 +12,7 @@ LOCAL_SRC_FILES := \
+ LOCAL_MODULE:= services
+ 
+ LOCAL_JAVA_LIBRARIES := android.policy
++LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_NO_EMMA_INSTRUMENT := true
+ LOCAL_NO_EMMA_COMPILE := true
+diff --git a/services/jni/Android.mk b/services/jni/Android.mk
+index 4ae8351..ae92ed7 100644
+--- a/services/jni/Android.mk
++++ b/services/jni/Android.mk
+@@ -1,5 +1,6 @@
+ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_SRC_FILES:= \
+     com_android_server_AlarmManagerService.cpp \
+diff --git a/services/surfaceflinger/Android.mk b/services/surfaceflinger/Android.mk
+index 366cacb..ad71698 100644
+--- a/services/surfaceflinger/Android.mk
++++ b/services/surfaceflinger/Android.mk
+@@ -1,5 +1,6 @@
+ LOCAL_PATH:= $(call my-dir)
+ include $(CLEAR_VARS)
++LOCAL_MODULE_TAGS := optional
+ 
+ LOCAL_SRC_FILES:= \
+     Layer.cpp 								\
+-- 
+1.7.8.3
+

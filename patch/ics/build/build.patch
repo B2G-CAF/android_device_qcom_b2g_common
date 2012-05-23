@@ -24,10 +24,10 @@ index 74beb49..06621d4 100644
    endif # STATIC_LIBRARIES
  endif
 diff --git a/target/product/core.mk b/target/product/core.mk
-index abb2d9f..0e5afb1 100644
+index abb2d9f..c3c6e9e 100644
 --- a/target/product/core.mk
 +++ b/target/product/core.mk
-@@ -23,43 +23,10 @@ PRODUCT_PROPERTY_OVERRIDES := \
+@@ -23,45 +23,11 @@ PRODUCT_PROPERTY_OVERRIDES := \
      ro.config.alarm_alert=Alarm_Classic.ogg
  
  PRODUCT_PACKAGES := \
@@ -69,7 +69,24 @@ index abb2d9f..0e5afb1 100644
 -    filterfw \
 -    framework-res \
      hprof-conv \
-     icu.dat \
+-    icu.dat \
      installd \
+     ip \
+     ip-up-vpn \
+diff --git a/target/product/generic_no_telephony.mk b/target/product/generic_no_telephony.mk
+index 5169f4e..4a4d57e 100644
+--- a/target/product/generic_no_telephony.mk
++++ b/target/product/generic_no_telephony.mk
+@@ -48,9 +48,6 @@ PRODUCT_PACKAGES := \
+     wpa_supplicant.conf
+ 
+ PRODUCT_PACKAGES += \
+-    icu.dat
+-
+-PRODUCT_PACKAGES += \
+     librs_jni \
+     libvideoeditor_jni \
+     libvideoeditorplayer \
 -- 
-1.7.6
+1.7.8.3
+

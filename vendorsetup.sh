@@ -25,23 +25,33 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-
 #
 # Environment variables influencing operation:
 #    B2G_TREE_ID - Defines the tree ID, used to determine which patches to
 #        apply.  If unset, |treeid.sh| is run to identify the tree
-#
+#    B2G_USE_REPO - If set, use |repo manifest| to determine when the Android
+#                   tree has changed.  Disabled by default for performance
+#                   reasons.
 
-
-tree_md5sum()
+__tree_md5sum()
 {
-   ( \
-      find device/qcom/b2g_common/patch -type f | \
-      xargs cat device/qcom/b2g_common/vendorsetup.sh device/qcom/b2g_common/treeid.sh; test -d .repo && repo manifest -r -o - 2>/dev/null \
+   (
+      FILELIST="$(find device/qcom/b2g_common/patch -type f) device/qcom/b2g_common/vendorsetup.sh device/qcom/b2g_common/treeid.sh"
+      if [[ -n "${B2G_USE_REPO}" ]]; then
+         repo manifest -r -o - 2>/dev/null
+      fi
+      cat ${FILELIST}
    ) | md5sum | cut -f1 -d\ 
 }
 
-patch_tree()
+__abandon_tree()
+{
+   if [[ -d .repo ]]; then
+      repo abandon b2g_autogen_ephemeral_branch || true
+   fi
+}
+
+__patch_tree()
 {
    (
       cd $(gettop)
@@ -50,17 +60,18 @@ patch_tree()
 
       echo >> Android tree IDs: ${TREE_ID}
       set -e
+      echo -n ">> Analyzing workspace for change..."
       local LASTMD5SUM=invalid
-      test -f device/qcom/b2g_common/lastpatch.md5sum && LASTMD5SUM=$(cat device/qcom/b2g_common/lastpatch.md5sum 2>/dev/null)
-      echo -n ">> Checking for changes to B2G patches and/or manifest..."
-      MD5SUM=$(tree_md5sum)
+      local MD5SUM=unknown
+      if [[ -f device/qcom/b2g_common/lastpatch.md5sum ]]; then
+         LASTMD5SUM=$(cat device/qcom/b2g_common/lastpatch.md5sum)
+         MD5SUM=$(__tree_md5sum)
+      fi
       if [[ "$LASTMD5SUM" != "$MD5SUM" ]]; then
          echo "Change detected.  Applying B2G patches".
          rm -f device/qcom/b2g_common/lastpatch.md5sum
 
-         if [[ -d .repo ]]; then
-            repo abandon b2g_autogen_ephemeral_branch || true
-         fi
+         __abandon_tree
 
          branch() {
             [[ -d $1 ]] || return 1
@@ -79,7 +90,7 @@ patch_tree()
                  )
             else
                read -p "Project $1 is not managed by git. Modify anyway?  [y/N] "
-               if [[ $REPLY != "y" ]]; then
+               if [[ ${REPLY} != "y" ]]; then
                   echo "No."
                   popd > /dev/null
                   return 1
@@ -131,39 +142,59 @@ patch_tree()
          # Run through each project and apply patches
          ROOT_DIR=${PWD}
          for PRJ in ${!PRJ_LIST[*]} ; do
-            if branch ${PRJ} ; then
-               declare -A PATCHNAME
-               for P in ${PRJ_LIST[${PRJ}]} ; do
-                  # Skip patches that have already been applied by an earlier ID
-                  if [[ -n "${PATCHNAME[$(basename $P)]}" ]]; then continue; fi
-                  PATCHNAME[$(basename $P)]=1
+            local FAILED_PRJ=${PRJ}
+            set +e
+            (
+               set -e
+               if branch ${PRJ} ; then
+                  # Ensure the project is clean before applying patches to it
+                  git reset --hard HEAD > /dev/null
+                  git clean -dfx
 
-                  echo "  ${P}"
-                  case $P in
-                  *.patch)  apply ${ROOT_DIR}/$P ;;
-                  *.sh)     source ${ROOT_DIR}/$P ;;
-                  *)        echo Warning: Ignoring $P
-                  esac
-               done
-               commit
+                  declare -A PATCHNAME
+                  for P in ${PRJ_LIST[${PRJ}]} ; do
+                     # Skip patches that have already been applied by an earlier ID
+                     if [[ -n "${PATCHNAME[$(basename $P)]}" ]]; then continue; fi
+                     PATCHNAME[$(basename $P)]=1
+
+                     echo "  ${P}"
+                     case $P in
+                     *.patch)  apply ${ROOT_DIR}/$P ;;
+                     *.sh)     source ${ROOT_DIR}/$P ;;
+                     *)        echo Warning: Ignoring $P
+                     esac
+                  done
+                  commit
+               fi
+            )
+            local ERR=$?
+            if [[ ${ERR} -ne 0 ]]; then
+               echo
+               echo ERROR: Patching of ${FAILED_PRJ}/ failed.
+               echo
+               exit ${ERR}
             fi
+            set -e
          done
 
          echo
          echo B2G patches applied.
-         echo $(tree_md5sum) > device/qcom/b2g_common/lastpatch.md5sum
+         echo $(__tree_md5sum) > device/qcom/b2g_common/lastpatch.md5sum
       else
          echo no changes detected.
       fi
    )
-   return $?
+   ERR=$?
+
+   if [[ ${ERR} -ne 0 ]]; then
+      lunch() { echo ERROR: B2G PATCHES FAILED TO APPLY;  return 1; }
+      choosecombo() { lunch; }
+   fi
+   return ${ERR}
 }
 
 # Stub out all java compilation.
 export JAVA_HOME=$(readlink -f device/qcom/b2g_common/faketools/jdk)
-
-patch_tree
-
 
 flash()
 {
@@ -174,4 +205,10 @@ rungdb()
 {
    ( cd $(gettop)/device/qcom/b2g_common && ./run-gdb.sh $@ )
 }
+
+
+case $1 in
+clean) __abandon_tree ;;
+*)     __patch_tree
+esac
 

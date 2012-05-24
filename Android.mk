@@ -29,6 +29,8 @@
 # If this is not a user/userdebug build redefine GAIA_DOMAIN away from
 # gaiamobile.org to prevent the UI from automatically updating itself,
 # which can be somewhat undesirable while in the middle of a debug session.
+#
+# TODO: This GAIA_DOMAIN logic is duplicated in .config.  Fragile.
 ifeq (,$(filter userdebug user,$(TARGET_BUILD_VARIANT)))
 GAIA_DOMAIN?=privategaia.tld
 # 'export' need to propagate the variable into the Gaia sub-make

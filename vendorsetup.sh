@@ -36,7 +36,7 @@
 __tree_md5sum()
 {
    (
-      FILELIST="$(find device/qcom/b2g_common/patch -type f) device/qcom/b2g_common/vendorsetup.sh device/qcom/b2g_common/treeid.sh"
+      FILELIST="$(find $@ -type f) device/qcom/b2g_common/vendorsetup.sh device/qcom/b2g_common/treeid.sh"
       if [[ -n "${B2G_USE_REPO}" ]]; then
          repo manifest -r -o - 2>/dev/null
       fi
@@ -46,6 +46,7 @@ __tree_md5sum()
 
 __abandon_tree()
 {
+   rm -f device/qcom/b2g_common/lastpatch.md5sum
    if [[ -d .repo ]]; then
       repo abandon b2g_autogen_ephemeral_branch || true
    fi
@@ -65,11 +66,10 @@ __patch_tree()
       local MD5SUM=unknown
       if [[ -f device/qcom/b2g_common/lastpatch.md5sum ]]; then
          LASTMD5SUM=$(cat device/qcom/b2g_common/lastpatch.md5sum)
-         MD5SUM=$(__tree_md5sum)
+         MD5SUM=$(__tree_md5sum ${PATCH_DIRS})
       fi
       if [[ "$LASTMD5SUM" != "$MD5SUM" ]]; then
          echo "Change detected.  Applying B2G patches".
-         rm -f device/qcom/b2g_common/lastpatch.md5sum
 
          __abandon_tree
 
@@ -179,7 +179,7 @@ __patch_tree()
 
          echo
          echo B2G patches applied.
-         echo $(__tree_md5sum) > device/qcom/b2g_common/lastpatch.md5sum
+         echo $(__tree_md5sum ${PATCH_DIRS}) > device/qcom/b2g_common/lastpatch.md5sum
       else
          echo no changes detected.
       fi

@@ -118,7 +118,7 @@ __patch_tree()
          }
          commit() {
             if [[ -d .git ]]; then
-               git commit --all -m "B2G Adaptations" -q
+               git commit --all -m "B2G Adaptations" --allow-empty -q
             fi
             popd > /dev/null
          }

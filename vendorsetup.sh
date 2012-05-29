@@ -46,7 +46,7 @@ __tree_md5sum()
 
 __abandon_tree()
 {
-   rm -f device/qcom/b2g_common/lastpatch.md5sum
+   rm -f out/lastpatch.md5sum
    if [[ -d .repo ]]; then
       repo abandon b2g_autogen_ephemeral_branch || true
    fi
@@ -64,8 +64,8 @@ __patch_tree()
       echo -n ">> Analyzing workspace for change..."
       local LASTMD5SUM=invalid
       local MD5SUM=unknown
-      if [[ -f device/qcom/b2g_common/lastpatch.md5sum ]]; then
-         LASTMD5SUM=$(cat device/qcom/b2g_common/lastpatch.md5sum)
+      if [[ -f out/lastpatch.md5sum ]]; then
+         LASTMD5SUM=$(cat out/lastpatch.md5sum)
          MD5SUM=$(__tree_md5sum ${PATCH_DIRS})
       fi
       if [[ "$LASTMD5SUM" != "$MD5SUM" ]]; then
@@ -179,7 +179,8 @@ __patch_tree()
 
          echo
          echo B2G patches applied.
-         echo $(__tree_md5sum ${PATCH_DIRS}) > device/qcom/b2g_common/lastpatch.md5sum
+         mkdir -p out
+         echo $(__tree_md5sum ${PATCH_DIRS}) > out/lastpatch.md5sum
       else
          echo no changes detected.
       fi

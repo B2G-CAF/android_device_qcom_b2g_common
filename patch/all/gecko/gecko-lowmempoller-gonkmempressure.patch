@@ -1,0 +1,168 @@
+diff --git a/hal/gonk/GonkMemPressure.cpp b/hal/gonk/GonkMemPressure.cpp
+new file mode 100644
+index 0000000..49cb8bd
+--- /dev/null
++++ b/hal/gonk/GonkMemPressure.cpp
+@@ -0,0 +1,162 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions are
++met:
++    * Redistributions of source code must retain the above copyright
++      notice, this list of conditions and the following disclaimer.
++    * Redistributions in binary form must reproduce the above
++      copyright notice, this list of conditions and the following
++      disclaimer in the documentation and/or other materials provided
++      with the distribution.
++    * Neither the name of Code Aurora Forum, Inc. nor the names of its
++      contributors may be used to endorse or promote products derived
++      from this software without specific prior written permission.
++
++THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
++WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
++ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++*/
++
++#include "base/basictypes.h"
++#include "nspr/prtypes.h"
++
++#include "nsCOMPtr.h"
++#include "nsThreadUtils.h"
++#include "mozilla/Services.h"
++#include "mozilla/Hal.h"
++
++#include "nsIObserverService.h"
++
++#include <android/log.h>
++#include <string>
++
++#include <stdlib.h>
++#include <fcntl.h>
++#include <sys/types.h>
++#include <sys/stat.h>
++#include <poll.h>
++
++#define LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "GonkMemPressure" , ## args)
++
++namespace mozilla {
++
++class MemPressureRunnable : public nsRunnable
++{
++	public:
++		NS_IMETHOD Run()
++		{
++			  LOG("Dispatching memory-pressure to listeners");
++			  nsCOMPtr<nsIObserverService> obsServ =
++					mozilla::services::GetObserverService();
++			  NS_NAMED_LITERAL_STRING(minimize, "heap-minimize");
++			  obsServ->NotifyObservers(nsnull, "memory-pressure", minimize.get());
++			  return NS_OK;
++		}
++};
++
++
++namespace hal_impl {
++
++static nsCOMPtr<nsIThread> sMemPressureThread;
++static bool sActiveNotification;
++
++class SysFsPoller {
++	public:
++		int Poll() {
++			struct pollfd fds[1];
++			char buf[3];
++			int err;
++
++			fds[0].fd = open(sysfs_node.c_str(), O_RDONLY);
++			if (fds[0].fd < 0) {
++				LOG("Error, could not open sysfs node\n");
++				return -1;
++			}
++			(void)read(fds[0].fd, buf, 2);
++			fds[0].events = POLLERR | POLLPRI;
++			err = poll(fds, 1, -1);
++			if (err > 0) {
++				(void)read(fds[0].fd, buf, 2);
++				if (fds[0].revents & POLLPRI || fds[0].revents & POLLERR)
++					err = 0;
++				else {
++					LOG("Received unrecognized poll event, mask 0x%x\n", fds[0].revents);
++					err = -1;
++				}
++			} else {
++				err = -1;
++			}
++			close(fds[0].fd);
++			return err;
++		}
++
++		SysFsPoller(const char *node) :
++			sysfs_node(node) {
++	   }
++	private:
++		std::string sysfs_node;
++};
++
++class MemPressurePoller {
++	public:
++		NS_INLINE_DECL_REFCOUNTING(MemPressurePoller);
++
++		MemPressurePoller() :
++			poller("/sys/kernel/mm/lowmemkiller/notify_trigger_active") {
++		}
++
++		static nsCOMPtr<nsIRunnable> GetRunnable() {
++			if (!mRunnable)
++				mRunnable = NS_NewRunnableMethod(new MemPressurePoller(), &MemPressurePoller::Poll);
++			return mRunnable;
++		}
++
++		void Poll() {
++			int ret = poller.Poll();
++			if (ret < 0) {
++				LOG("Error polling for mempressure sysfs node (err=%d)", ret);
++				return;
++			}
++
++			NS_DispatchToMainThread(new MemPressureRunnable());
++
++			if (sActiveNotification) {
++				sMemPressureThread->Dispatch(GetRunnable(), NS_DISPATCH_NORMAL);
++			}
++		}
++
++	private:
++		static nsCOMPtr<nsIRunnable> mRunnable;
++		SysFsPoller poller;
++		const char* sysfs_node;
++};
++
++nsCOMPtr<nsIRunnable> MemPressurePoller::mRunnable = NULL;
++
++void
++EnableMemoryPressureNotifications()
++{
++	sActiveNotification = true;
++	if (sMemPressureThread == nsnull) {
++		NS_NewThread(getter_AddRefs(sMemPressureThread), MemPressurePoller::GetRunnable());
++	}
++}
++
++void
++DisableMemoryPressureNotifications()
++{
++	sActiveNotification = false;
++}
++
++} //hal_impl
++} // mozilla

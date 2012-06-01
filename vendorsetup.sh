@@ -207,9 +207,16 @@ rungdb()
    ( cd $(gettop)/device/qcom/b2g_common && ./run-gdb.sh $@ )
 }
 
+if [[ -f vendor/qcom/proprietary/b2g_common/vendorsetup.sh ]]; then
+   . vendor/qcom/proprietary/b2g_common/vendorsetup.sh
+fi
 
-case $1 in
-clean) __abandon_tree ;;
-*)     __patch_tree
-esac
-
+if [[ -z $1 ]]; then
+   __patch_tree
+else
+   case $1 in
+   clean) __abandon_tree ;;
+   np) echo "Skipping patch tree step...";;
+   *) echo Error: Unknown command: $1
+   esac
+fi

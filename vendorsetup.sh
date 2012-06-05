@@ -36,7 +36,7 @@
 __tree_md5sum()
 {
    (
-      FILELIST="$(find $@ -type f) device/qcom/b2g_common/vendorsetup.sh device/qcom/b2g_common/treeid.sh"
+      FILELIST="$(find $@ -type f 2>/dev/null) device/qcom/b2g_common/vendorsetup.sh device/qcom/b2g_common/treeid.sh"
       if [[ -n "${B2G_USE_REPO}" ]]; then
          repo manifest -r -o - 2>/dev/null
       fi

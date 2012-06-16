@@ -196,6 +196,7 @@ __patch_tree()
 
 # Stub out all java compilation.
 export JAVA_HOME=$(readlink -f device/qcom/b2g_common/faketools/jdk)
+export ANDROID_JAVA_HOME=${JAVA_HOME}
 
 flash()
 {

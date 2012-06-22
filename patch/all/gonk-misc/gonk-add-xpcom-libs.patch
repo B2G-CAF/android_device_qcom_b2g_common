@@ -1,8 +1,8 @@
 diff --git a/Android.mk b/Android.mk
-index ff70708..2e863ac 100644
+index 0d5315e..8b67b21 100644
 --- a/Android.mk
 +++ b/Android.mk
-@@ -96,6 +96,10 @@ GECKO_LIB_DEPS := \
+@@ -117,6 +117,10 @@ GECKO_LIB_DEPS := \
  	libsensorservice.so \
  	libsysutils.so \
  
@@ -13,7 +13,7 @@ index ff70708..2e863ac 100644
  .PHONY: $(LOCAL_BUILT_MODULE)
  $(LOCAL_BUILT_MODULE): $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) $(addprefix $(TARGET_OUT_SHARED_LIBRARIES)/,$(GECKO_LIB_DEPS))
  	export CONFIGURE_ARGS="$(GECKO_CONFIGURE_ARGS)" && \
-@@ -112,4 +116,10 @@ $(LOCAL_BUILT_MODULE): $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) $(addpref
+@@ -133,4 +137,13 @@ $(LOCAL_BUILT_MODULE): $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) $(addpref
  	echo $(MAKE) -C $(GECKO_PATH) -f client.mk -s && \
  	$(MAKE) -C $(GECKO_PATH) -f client.mk -s && \
  	$(MAKE) -C $(GECKO_OBJDIR) package && \
@@ -21,7 +21,10 @@ index ff70708..2e863ac 100644
 +	mkdir -p $(@D) && cp $(GECKO_OBJDIR)/dist/b2g-*.tar.gz $@ && \
 +	mkdir -p $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/libxpcomglue_s_intermediates && \
 +	cp $(GECKO_OBJDIR)/dist/lib/libxpcomglue_s.a $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/libxpcomglue_s_intermediates/libxpcomglue_s.a && \
++	cp $(GECKO_OBJDIR)/dist/lib/libxpcomglue_s.a $(TARGET_OUT_INTERMEDIATES)/lib/libxpcomglue_s.a && \
 +	mkdir -p $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/libxpcom_intermediates && \
 +	cp $(GECKO_OBJDIR)/dist/lib/libxpcom.so $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/libxpcom_intermediates/libxpcom.so && \
++	cp $(GECKO_OBJDIR)/dist/lib/libxpcom.so $(TARGET_OUT_INTERMEDIATES)/lib/libxpcom.so && \
 +	mkdir -p $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/libmozalloc_intermediates && \
 +	cp $(GECKO_OBJDIR)/dist/lib/libmozalloc.a $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/libmozalloc_intermediates/libmozalloc.a
++	cp $(GECKO_OBJDIR)/dist/lib/libmozalloc.a $(TARGET_OUT_INTERMEDIATES)/lib/libmozalloc.a

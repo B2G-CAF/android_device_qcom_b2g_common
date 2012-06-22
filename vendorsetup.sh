@@ -218,6 +218,6 @@ else
    case $1 in
    clean) __abandon_tree ;;
    np) echo "Skipping patch tree step...";;
-   *) echo Error: Unknown command: $1
+   *) [[ -z "$PS1" ]] && __patch_tree || echo Error: Unknown command: $1
    esac
 fi

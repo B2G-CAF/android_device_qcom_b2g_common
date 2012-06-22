@@ -7,12 +7,12 @@ index e8b628a..9fa08cd 100644
  REPORTER=Spec
  
 -GAIA_APP_SRCDIRS?=apps test_apps
-+GAIA_APP_SRCDIRS?=$CURDIR/apps $CURDIR/test_apps
++GAIA_APP_SRCDIRS?=$(CURDIR)/apps $(CURDIR)/test_apps
  
  ifeq ($(MAKECMDGOALS), demo)
  GAIA_DOMAIN=thisdomaindoesnotexist.org
 -GAIA_APP_SRCDIRS=apps
-+GAIA_APP_SRCDIRS=$CURDIR/apps
++GAIA_APP_SRCDIRS=$(CURDIR)/apps
  endif
  
  

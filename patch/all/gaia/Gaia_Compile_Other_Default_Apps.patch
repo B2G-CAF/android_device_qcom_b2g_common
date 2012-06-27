@@ -25,15 +25,6 @@ index e8b628a..9fa08cd 100644
  	if [ -f custom-prefs.js ]; \
  	  then \
  	    cat custom-prefs.js >> profile/user.js; \
-@@ -427,7 +427,7 @@ update-offline-manifests:
- # working on just gaia itself, and you already have B2G firmware on your
- # phone, and you have adb in your path, then you can use the install-gaia
- # target to update the gaia files and reboot b2g
--PROFILE_PATH = /data/local/
-+PROFILE_PATH = /data/local
- install-gaia: profile
- 	$(ADB) start-server
- 	$(ADB) shell rm -r /cache/*
 diff --git a/build/offline-cache.js b/build/offline-cache.js
 index 176b0ee..e0d0468 100644
 --- a/build/offline-cache.js

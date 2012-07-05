@@ -1,32 +1,30 @@
 diff --git a/Makefile b/Makefile
-index e8b628a..9fa08cd 100644
+index 0a8cfe6..5ed8caa 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -32,11 +32,11 @@ DEBUG?=0
+@@ -32,7 +32,7 @@ DEBUG?=0
  
  REPORTER=Spec
  
--GAIA_APP_SRCDIRS?=apps test_apps
-+GAIA_APP_SRCDIRS?=$(CURDIR)/apps $(CURDIR)/test_apps
+-GAIA_APP_SRCDIRS?=apps test_apps showcase_apps
++GAIA_APP_SRCDIRS?=$(CURDIR)/apps $(CURDIR)/test_apps $(CURDIR)/showcase_apps
+ 
+ GAIA_ALL_APP_SRCDIRS=$(GAIA_APP_SRCDIRS)
+ 
+@@ -40,9 +40,9 @@ GAIA_APP_RELATIVEPATH=$(foreach dir, $(GAIA_APP_SRCDIRS), $(wildcard $(dir)/*))
  
  ifeq ($(MAKECMDGOALS), demo)
  GAIA_DOMAIN=thisdomaindoesnotexist.org
+-GAIA_APP_SRCDIRS=apps showcase_apps
++GAIA_APP_SRCDIRS=$(CURDIR)/apps $(CURDIR)/showcase_apps
+ else ifeq ($(MAKECMDGOALS), production)
 -GAIA_APP_SRCDIRS=apps
 +GAIA_APP_SRCDIRS=$(CURDIR)/apps
  endif
  
  
-@@ -230,7 +230,7 @@ install-settingsdb: settingsdb install-xulrunner
- preferences: install-xulrunner
- 	@echo "Generating prefs.js..."
- 	@mkdir -p profile
--	$(XULRUNNER) $(XPCSHELL) -e 'const GAIA_DIR = "$(CURDIR)"; const PROFILE_DIR = "$(CURDIR)/profile"; const GAIA_DOMAIN = "$(GAIA_DOMAIN)"; const DEBUG = $(DEBUG); const LOCAL_DOMAINS = $(LOCAL_DOMAINS); const HOMESCREEN = "$(HOMESCREEN)"; const GAIA_PORT = "$(GAIA_PORT)"' build/preferences.js
-+	$(XULRUNNER) $(XPCSHELL) -e 'const GAIA_DIR = "$(CURDIR)"; const PROFILE_DIR = "$(CURDIR)/profile"; const GAIA_DOMAIN = "$(GAIA_DOMAIN)"; const DEBUG = $(DEBUG); const LOCAL_DOMAINS = $(LOCAL_DOMAINS); const HOMESCREEN = "$(HOMESCREEN)"; const GAIA_PORT = "$(GAIA_PORT)"; const GAIA_APP_SRCDIRS = "$(GAIA_APP_SRCDIRS)"' build/preferences.js
- 	if [ -f custom-prefs.js ]; \
- 	  then \
- 	    cat custom-prefs.js >> profile/user.js; \
 diff --git a/build/offline-cache.js b/build/offline-cache.js
-index 176b0ee..e0d0468 100644
+index 39a7e14..292412e 100644
 --- a/build/offline-cache.js
 +++ b/build/offline-cache.js
 @@ -71,8 +71,7 @@ function storeCache(id, url, content, count) {
@@ -60,7 +58,7 @@ index 176b0ee..e0d0468 100644
      const base = manifest.path;
      manifest.append(dir);
 diff --git a/build/preferences.js b/build/preferences.js
-index d4afd3b..a4a331a 100644
+index 6c1c85f..04df482 100644
 --- a/build/preferences.js
 +++ b/build/preferences.js
 @@ -4,8 +4,7 @@ const { 'classes': Cc, 'interfaces': Ci, 'results': Cr, } = Components;
@@ -83,14 +81,3 @@ index d4afd3b..a4a331a 100644
    file.append(dir);
    file.append(name);
  
-@@ -114,7 +112,9 @@ let privileges = [];
- let domains = [];
- domains.push(GAIA_DOMAIN);
- 
--['apps', 'test_apps'].forEach(function parseDirectory(directoryName) {
-+let appSrcDirs = GAIA_APP_SRCDIRS.split(' ');
-+
-+appSrcDirs.forEach(function parseDirectory(directoryName) {
-   let directories = getSubDirectories(directoryName);
-   directories.forEach(function readManifests(dir) {
-     let manifest = getJSON(directoryName, dir, "manifest.webapp");

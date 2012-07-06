@@ -161,7 +161,6 @@ __patch_tree()
                      case $P in
                      *.patch)  apply ${ROOT_DIR}/$P ;;
                      *.sh)     source ${ROOT_DIR}/$P ;;
-                     *)        echo Warning: Ignoring $P
                      esac
                   done
                   commit

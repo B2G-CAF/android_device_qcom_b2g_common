@@ -15,9 +15,8 @@ XPIDL_OUT := $(XPIDL_MODULE_OBJDIR)/xpidl_obj
 # Home directory of the module source
 XPIDL_PATH := $(LOCAL_PATH)
 
-# Make sure Gecko is built prior to the component
+# Add Gecko as a dependency of this module.
 LOCAL_REQUIRED_MODULES := $(LOCAL_REQUIRED_MODULES) gecko
-
 # Add Gecko headers to include path
 LOCAL_C_INCLUDES := $(LOCAL_C_INCLUDES) $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko/dist/include
 # Standard libraries required by all XPCOM components
@@ -31,13 +30,23 @@ LIBXUL_DIST := $(GECKO_OBJDIR)/dist
 # Flags to be used by idl compilation
 XPIDL_FLAGS := -I$(XPIDL_PATH) -I$(LIBXUL_DIST)/idl
 
+# Although we added Gecko as a dependency, that only prevents the link step
+# from happening until Gecko is built. But the IDL generators and other
+# headers have no make dependency on Gecko and will fall over in
+# parallel make. Add the define below as a pre-req to every Gecko file and path
+# that we depend on
+DEPENDS_ON_GECKO := $(TARGET_OUT_INTERMEDIATES)/DATA/gecko_intermediates/gecko
+
 xpidl_prereqs:
 	@mkdir -p $(XPIDL_OUT)
 
-XPIDL_DEPS := $(TARGET_OUT_INTERMEDIATES)/lib/libxpcom.so \
-              $(LIBXUL_DIST)/sdk/bin/header.py \
+XPIDL_DEPS := $(LIBXUL_DIST)/sdk/bin/header.py \
               $(LIBXUL_DIST)/sdk/bin/typelib.py \
               $(LIBXUL_DIST)/sdk/bin/xpidl.py \
+
+$(LIBXUL_DIST)/sdk/bin/header.py: $(DEPENDS_ON_GECKO)
+$(LIBXUL_DIST)/sdk/bin/typelib.py: $(DEPENDS_ON_GECKO)
+$(LIBXUL_DIST)/sdk/bin/xpidl.py: $(DEPENDS_ON_GECKO)
 
 PLY_INCLUDE := -I$(GECKO_DIR)/other-licenses/ply
 
@@ -68,8 +77,6 @@ LOCAL_ADDITIONAL_DEPENDENCIES :=	$(LOCAL_ADDITIONAL_DEPENDENCIES) $(XPIDL_OUT)/$
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_ADDITIONAL_DEPENDENCIES) export_headers export_idls
 
 $(XPIDL_OUT)/%.h: $(XPIDL_PATH)/%.idl $(XPIDL_DEPS) xpidl_prereqs
-	$(warning XPIDL_OUT: $(XPIDL_OUT), LOCAL_MODULE: $(LOCAL_MODULE))
-	$(warning XPIDL_PATH is $(XPIDL_PATH))
 	$(REPORT_BUILD)
 	$(PYTHON_PATH) $(PLY_INCLUDE) $(LIBXUL_DIST)/sdk/bin/header.py $(XPIDL_FLAGS) $(CURRENT_IDLS) -o $@
 
@@ -79,21 +86,26 @@ $(XPIDL_OUT)/%.xpt: $(XPIDL_PATH)/%.idl $(XPIDL_DEPS) xpidl_prereqs
 	$(REPORT_BUILD)
 	$(PYTHON_PATH) $(PLY_INCLUDE) -I$(GECKO_DIR)/xpcom/typelib/xpt/tools $(LIBXUL_DIST)/sdk/bin/typelib.py $(XPIDL_FLAGS) $(CURRENT_IDLS) -o $@
 
-$(XPIDL_OUT)/$(XPIDL_MODULE).xpt: $(patsubst %.idl,$(XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS))
+$(XPIDL_OUT)/$(XPIDL_MODULE).xpt: $(patsubst %.idl,$(XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS)) $(GECKO_DIR)/config/buildlist.py
 	$(XPIDL_LINK) $(XPIDL_OUT)/$(XPIDL_MODULE).xpt $(patsubst %.idl,$(XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS))
 	$(INSTALL) $(INSTALL_FLAGS) $(XPIDL_OUT)/$(XPIDL_MODULE).xpt $(FINAL_TARGET)/components
 	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(FINAL_TARGET)/components/interfaces.manifest "interfaces $(XPIDL_MODULE).xpt"
 	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(FINAL_TARGET)/chrome.manifest "manifest components/interfaces.manifest"
 	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(FINAL_TARGET)/chrome.manifest "manifest components/$(XPIDL_MODULE).manifest"
 
+$(GECKO_DIR)/config/buildlist.py: $(DEPENDS_ON_GECKO)
+
 include $(BUILD_SHARED_LIBRARY)
 
 # export .idl files to dist idl dir
-export_idls: $(XPIDL_PATH)/$(LOCAL_XPCOM_IDLS) $(LIBXUL_DIST)/idl
+export_idls: $(patsubst %.idl,$(XPIDL_PATH)/%.idl,$(LOCAL_XPCOM_IDLS)) $(LIBXUL_DIST)/idl
 	$(INSTALL) $(INSTALL_FLAGS) $^
 
-export_headers: $(XPIDL_OUT)/$(patsubst %.idl,%.h, $(LOCAL_XPCOM_IDLS)) $(LIBXUL_DIST)/include
+$(LIBXUL_DIST)/idl: $(DEPENDS_ON_GECKO)
+
+export_headers: $(patsubst %.idl,$(XPIDL_OUT)/%.h,$(LOCAL_XPCOM_IDLS)) $(LIBXUL_DIST)/include
 	$(INSTALL) $(INSTALL_FLAGS) $^
 
+$(LIBXUL_DIST)/include: $(DEPENDS_ON_GECKO)
 
 endif # LOCAL_XPCOM_IDLS

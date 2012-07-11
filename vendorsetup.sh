@@ -131,7 +131,7 @@ __patch_tree()
             for ID in ${TREE_ID} ; do
                local D=${DIR}/${ID}
                [[ -d $D ]] || continue
-               PATCHES=$(find $D -type f)
+               PATCHES=$(find $D -type f | sort -fs)
                for P in ${PATCHES}; do
                   PRJ=$(dirname ${P#${DIR}/${ID}/})
                   PRJ_LIST[$PRJ]="${PRJ_LIST[$PRJ]} $P"

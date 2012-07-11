@@ -1,8 +1,8 @@
 diff --git a/Android.mk b/Android.mk
-index 0d5315e..895e988 100644
+index 4e67e5a..ded4ac8 100644
 --- a/Android.mk
 +++ b/Android.mk
-@@ -117,8 +117,16 @@ GECKO_LIB_DEPS := \
+@@ -126,6 +126,13 @@ GECKO_LIB_DEPS := \
  	libsensorservice.so \
  	libsysutils.so \
  
@@ -15,13 +15,10 @@ index 0d5315e..895e988 100644
 +
  .PHONY: $(LOCAL_BUILT_MODULE)
  $(LOCAL_BUILT_MODULE): $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) $(addprefix $(TARGET_OUT_SHARED_LIBRARIES)/,$(GECKO_LIB_DEPS))
-+	$(warning Building gecko)
  	export CONFIGURE_ARGS="$(GECKO_CONFIGURE_ARGS)" && \
- 	export GONK_PRODUCT="$(TARGET_DEVICE)" && \
- 	export TARGET_ARCH="$(TARGET_ARCH)" && \
-@@ -133,4 +141,13 @@ $(LOCAL_BUILT_MODULE): $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) $(addpref
- 	echo $(MAKE) -C $(GECKO_PATH) -f client.mk -s && \
+@@ -143,4 +150,13 @@ $(LOCAL_BUILT_MODULE): $(TARGET_CRTBEGIN_DYNAMIC_O) $(TARGET_CRTEND_O) $(addpref
  	$(MAKE) -C $(GECKO_PATH) -f client.mk -s && \
+ 	rm -f $(GECKO_OBJDIR)/dist/b2g-*.tar.gz && \
  	$(MAKE) -C $(GECKO_OBJDIR) package && \
 -	mkdir -p $(@D) && cp $(GECKO_OBJDIR)/dist/b2g-*.tar.gz $@
 +	mkdir -p $(@D) && cp $(GECKO_OBJDIR)/dist/b2g-*.tar.gz $@ && \
@@ -32,5 +29,5 @@ index 0d5315e..895e988 100644
 +	cp $(GECKO_OBJDIR)/dist/lib/libxpcom.so $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/libxpcom_intermediates/libxpcom.so && \
 +	cp $(GECKO_OBJDIR)/dist/lib/libxpcom.so $(TARGET_OUT_INTERMEDIATES)/lib/libxpcom.so && \
 +	mkdir -p $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/libmozalloc_intermediates && \
-+	cp $(GECKO_OBJDIR)/dist/lib/libmozalloc.a $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/libmozalloc_intermediates/libmozalloc.a
++	cp $(GECKO_OBJDIR)/dist/lib/libmozalloc.a $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/libmozalloc_intermediates/libmozalloc.a && \
 +	cp $(GECKO_OBJDIR)/dist/lib/libmozalloc.a $(TARGET_OUT_INTERMEDIATES)/lib/libmozalloc.a

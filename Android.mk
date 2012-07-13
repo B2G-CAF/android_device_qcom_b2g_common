@@ -32,7 +32,7 @@
 #
 # TODO: This GAIA_DOMAIN logic is duplicated in .config.  Fragile.
 ifeq (,$(filter userdebug user,$(TARGET_BUILD_VARIANT)))
-GAIA_DOMAIN?=privategaia.tld
+GAIA_DOMAIN?=example.com
 # 'export' need to propagate the variable into the Gaia sub-make
 export GAIA_DOMAIN
 endif

@@ -29,3 +29,15 @@ HTTP=android#  Disable chrome HTTP stack in frameworks/base/media/libstagefright
 
 PRODUCT_PACKAGES += rilproxy init.b2g.rc httpd.conf fakeperm mountvol.sh gaia gecko
 
+PRODUCT_PACKAGES += \
+   OpenSans-BoldItalic.ttf \
+   OpenSans-Bold.ttf \
+   OpenSans-ExtraBoldItalic.ttf \
+   OpenSans-ExtraBold.ttf \
+   OpenSans-Italic.ttf \
+   OpenSans-LightItalic.ttf \
+   OpenSans-Light.ttf \
+   OpenSans-Regular.ttf \
+   OpenSans-SemiboldItalic.ttf \
+   OpenSans-Semibold.ttf
+

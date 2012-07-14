@@ -1,3 +1,30 @@
+# Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions are
+# met:
+#     * Redistributions of source code must retain the above copyright
+#       notice, this list of conditions and the following disclaimer.
+#     * Redistributions in binary form must reproduce the above
+#       copyright notice, this list of conditions and the following
+#       disclaimer in the documentation and/or other materials provided
+#       with the distribution.
+#     * Neither the name of Code Aurora Forum, Inc. nor the names of its
+#       contributors may be used to endorse or promote products derived
+#       from this software without specific prior written permission.
+#
+# THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
+# WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+# MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
+# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
+# BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
+# OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
+# IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+#
 
 #
 # Makefile to hook into Android.mk for building XPCOM IDLs
@@ -5,6 +32,19 @@
 #
 
 ifneq ($(LOCAL_XPCOM_IDLS),)
+
+# First sanity check to ensure Makefile is correct
+ifeq (,$(strip $(LOCAL_XPCOM_MODULE_UUID)))
+$(error LOCAL_XPCOM_MODULE_UUID must be defined)
+endif
+
+ifeq (,$(strip $(LOCAL_XPCOM_MODULE_CLASSID)))
+$(error LOCAL_XPCOM_MODULE_CLASSID must be defined)
+endif
+
+ifeq (,$(strip $(LOCAL_XPCOM_MODULE_CONTRACTID)))
+$(error LOCAL_XPCOM_MODULE_CONTRACTID must be defined)
+endif
 
 XPIDL_MODULE := $(LOCAL_MODULE)
 # The directory where this component's intermediates will be put by Android build system
@@ -18,10 +58,14 @@ XPIDL_PATH := $(LOCAL_PATH)
 # Add Gecko as a dependency of this module.
 LOCAL_REQUIRED_MODULES := $(LOCAL_REQUIRED_MODULES) gecko
 # Add Gecko headers to include path
-LOCAL_C_INCLUDES := $(LOCAL_C_INCLUDES) $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko/dist/include
+LOCAL_C_INCLUDES := $(LOCAL_C_INCLUDES) $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko/dist/include $(XPIDL_OUT)
 # Standard libraries required by all XPCOM components
 LOCAL_SHARED_LIBRARIES := $(LOCAL_SHARED_LIBRARIES) libxpcom
 LOCAL_STATIC_LIBRARIES := $(LOCAL_STATIC_LIBRARIES) libxpcomglue_s libmozalloc
+# Compiler flags required by many Gecko libraries/sources
+LOCAL_CPPFLAGS := $(LOCAL_CPPFLAGS) -std=c++0x
+LOCAL_CFLAGS := $(LOCAL_CFLAGS) -D__STDC_INT64__ -D__STDC_LIMIT_MACROS
+
 # Gecko locations
 GECKO_DIR := $(ANDROID_BUILD_TOP)/gecko
 GECKO_OBJDIR := $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko
@@ -61,7 +105,6 @@ CURRENT_IDLS = $(abspath $<)
 PYTHON := python
 PYTHON_PATH := $(PYTHON) $(GECKO_DIR)/config/pythonpath.py
 XPIDL_LINK := $(PYTHON) $(LIBXUL_DIST)/sdk/bin/xpt.py link
-FINAL_TARGET := $(LIBXUL_DIST)/bin
 
 INSTALL := install
 INSTALL_FLAGS := -m 644
@@ -75,37 +118,65 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_ADDITIONAL_DEPENDENCIES) $(patsubst %.i
 LOCAL_ADDITIONAL_DEPENDENCIES :=	$(LOCAL_ADDITIONAL_DEPENDENCIES) $(patsubst %.idl,$(XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS))
 LOCAL_ADDITIONAL_DEPENDENCIES :=	$(LOCAL_ADDITIONAL_DEPENDENCIES) $(XPIDL_OUT)/$(XPIDL_MODULE).xpt
 LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_ADDITIONAL_DEPENDENCIES) export_headers export_idls
+LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_ADDITIONAL_DEPENDENCIES) xpcom_install
+
+XPCOM_INSTALL_DIR := $(TARGET_OUT)/b2g/distribution/extensions/$(LOCAL_XPCOM_MODULE_UUID)
+
+xpidl_install_prereqs: $(DEPENDS_ON_GECKO)
+	@mkdir -p $(XPCOM_INSTALL_DIR)/components
 
 $(XPIDL_OUT)/%.h: $(XPIDL_PATH)/%.idl $(XPIDL_DEPS) xpidl_prereqs
 	$(REPORT_BUILD)
 	$(PYTHON_PATH) $(PLY_INCLUDE) $(LIBXUL_DIST)/sdk/bin/header.py $(XPIDL_FLAGS) $(CURRENT_IDLS) -o $@
 
 # generate intermediate .xpt files into $(XPIDL_OUT), then link
-# into $(XPIDL_MODULE).xpt and export it to $(FINAL_TARGET)/components.
+# into $(XPIDL_MODULE).xpt and export it to $(XPCOM_INSTALL_DIR)/components.
 $(XPIDL_OUT)/%.xpt: $(XPIDL_PATH)/%.idl $(XPIDL_DEPS) xpidl_prereqs
 	$(REPORT_BUILD)
 	$(PYTHON_PATH) $(PLY_INCLUDE) -I$(GECKO_DIR)/xpcom/typelib/xpt/tools $(LIBXUL_DIST)/sdk/bin/typelib.py $(XPIDL_FLAGS) $(CURRENT_IDLS) -o $@
 
-$(XPIDL_OUT)/$(XPIDL_MODULE).xpt: $(patsubst %.idl,$(XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS)) $(GECKO_DIR)/config/buildlist.py
+$(XPIDL_OUT)/$(XPIDL_MODULE).xpt: $(patsubst %.idl,$(XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS)) xpidl_install_prereqs
 	$(XPIDL_LINK) $(XPIDL_OUT)/$(XPIDL_MODULE).xpt $(patsubst %.idl,$(XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS))
-	$(INSTALL) $(INSTALL_FLAGS) $(XPIDL_OUT)/$(XPIDL_MODULE).xpt $(FINAL_TARGET)/components
-	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(FINAL_TARGET)/components/interfaces.manifest "interfaces $(XPIDL_MODULE).xpt"
-	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(FINAL_TARGET)/chrome.manifest "manifest components/interfaces.manifest"
-	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(FINAL_TARGET)/chrome.manifest "manifest components/$(XPIDL_MODULE).manifest"
+	$(INSTALL) $(INSTALL_FLAGS) $(XPIDL_OUT)/$(XPIDL_MODULE).xpt $(XPCOM_INSTALL_DIR)/components
 
-$(GECKO_DIR)/config/buildlist.py: $(DEPENDS_ON_GECKO)
+
+LOCAL_POST_BUILD_COMMAND := cp $(XPIDL_MODULE_OBJDIR)/LINKED/$(XPIDL_MODULE).so $(XPCOM_INSTALL_DIR)/components
+
+LOCAL_JS_SRC_FILES := $(filter %.js,$(LOCAL_SRC_FILES))
+LOCAL_SRC_FILES := $(filter-out %.js,$(LOCAL_SRC_FILES))
 
 include $(BUILD_SHARED_LIBRARY)
 
-# export .idl files to dist idl dir
-export_idls: $(patsubst %.idl,$(XPIDL_PATH)/%.idl,$(LOCAL_XPCOM_IDLS)) $(LIBXUL_DIST)/idl
-	$(INSTALL) $(INSTALL_FLAGS) $^
+export_idls: $(patsubst %.idl,$(XPIDL_PATH)/%.idl,$(LOCAL_XPCOM_IDLS)) xpidl_install_prereqs
+	$(INSTALL) $(INSTALL_FLAGS) $(patsubst %.idl,$(XPIDL_PATH)/%.idl,$(LOCAL_XPCOM_IDLS)) $(XPCOM_INSTALL_DIR)/components
 
 $(LIBXUL_DIST)/idl: $(DEPENDS_ON_GECKO)
 
-export_headers: $(patsubst %.idl,$(XPIDL_OUT)/%.h,$(LOCAL_XPCOM_IDLS)) $(LIBXUL_DIST)/include
-	$(INSTALL) $(INSTALL_FLAGS) $^
+export_headers: $(patsubst %.idl,$(XPIDL_OUT)/%.h,$(LOCAL_XPCOM_IDLS)) xpidl_install_prereqs
+	$(INSTALL) $(INSTALL_FLAGS) $(patsubst %.idl,$(XPIDL_OUT)/%.h,$(LOCAL_XPCOM_IDLS)) $(XPCOM_INSTALL_DIR)/components
 
 $(LIBXUL_DIST)/include: $(DEPENDS_ON_GECKO)
 
+create_install_rdf:
+	build/core/create_install_rdf $(XPIDL_OUT)/install.rdf $(LOCAL_XPCOM_MODULE_UUID) $(LOCAL_XPCOM_MODULE_BOOTSTRAP)
+
+create_chrome_manifest:
+	build/core/create_chrome_manifest $(XPIDL_OUT)/chrome.manifest $(LOCAL_XPCOM_MODULE_CLASSID) $(LOCAL_XPCOM_MODULE_CONTRACTID) $(XPIDL_MODULE).so $(LOCAL_XPCOM_MODULE_NAVIGATOR_NAME)
+
+install_js_srcs:
+
+ifneq (,$(strip $(LOCAL_JS_SRC_FILES)))
+install_js_srcs: xpidl_install_prereqs
+	$(foreach s,$(LOCAL_JS_SRC_FILES),$(shell cp $(XPIDL_PATH)/$s $(XPCOM_INSTALL_DIR)/components))
+endif
+
+xpcom_install: xpidl_install_prereqs create_install_rdf create_chrome_manifest install_js_srcs $(GECKO_DIR)/config/buildlist.py
+	cp $(XPIDL_OUT)/install.rdf $(XPCOM_INSTALL_DIR)
+	cp $(XPIDL_OUT)/chrome.manifest $(XPCOM_INSTALL_DIR)
+	-cp $(XPIDL_PATH)/bootstrap.js $(XPCOM_INSTALL_DIR)
+	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(XPCOM_INSTALL_DIR)/components/interfaces.manifest "interfaces $(XPIDL_MODULE).xpt"
+	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(XPCOM_INSTALL_DIR)/chrome.manifest "manifest components/interfaces.manifest"
+	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(XPCOM_INSTALL_DIR)/chrome.manifest "manifest components/$(XPIDL_MODULE).manifest"
+
+$(GECKO_DIR)/config/buildlist.py: $(DEPENDS_ON_GECKO)
 endif # LOCAL_XPCOM_IDLS

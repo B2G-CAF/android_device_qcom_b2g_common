@@ -79,7 +79,7 @@ XPIDL_FLAGS := -I$(XPIDL_PATH) -I$(LIBXUL_DIST)/idl
 # headers have no make dependency on Gecko and will fall over in
 # parallel make. Add the define below as a pre-req to every Gecko file and path
 # that we depend on
-DEPENDS_ON_GECKO := $(TARGET_OUT_INTERMEDIATES)/DATA/gecko_intermediates/gecko
+DEPENDS_ON_GECKO := $(TARGET_OUT)/b2g/distribution
 
 xpidl_prereqs:
 	@mkdir -p $(XPIDL_OUT)
@@ -171,9 +171,9 @@ install_js_srcs: xpidl_install_prereqs
 endif
 
 xpcom_install: xpidl_install_prereqs create_install_rdf create_chrome_manifest install_js_srcs $(GECKO_DIR)/config/buildlist.py
-	cp $(XPIDL_OUT)/install.rdf $(XPCOM_INSTALL_DIR)
-	cp $(XPIDL_OUT)/chrome.manifest $(XPCOM_INSTALL_DIR)
-	-cp $(XPIDL_PATH)/bootstrap.js $(XPCOM_INSTALL_DIR)
+	@cp $(XPIDL_OUT)/install.rdf $(XPCOM_INSTALL_DIR)
+	@cp $(XPIDL_OUT)/chrome.manifest $(XPCOM_INSTALL_DIR)
+	-@cp $(XPIDL_PATH)/bootstrap.js $(XPCOM_INSTALL_DIR)
 	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(XPCOM_INSTALL_DIR)/components/interfaces.manifest "interfaces $(XPIDL_MODULE).xpt"
 	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(XPCOM_INSTALL_DIR)/chrome.manifest "manifest components/interfaces.manifest"
 	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(XPCOM_INSTALL_DIR)/chrome.manifest "manifest components/$(XPIDL_MODULE).manifest"

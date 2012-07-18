@@ -145,6 +145,12 @@ LOCAL_POST_BUILD_COMMAND := cp $(XPIDL_MODULE_OBJDIR)/LINKED/$(XPIDL_MODULE).so 
 LOCAL_JS_SRC_FILES := $(filter %.js,$(LOCAL_SRC_FILES))
 LOCAL_SRC_FILES := $(filter-out %.js,$(LOCAL_SRC_FILES))
 
+LOCAL_XPIDL_MODULE_SUFFIX := so
+
+ifeq (, $(strip $(LOCAL_SRC_FILES)))
+	LOCAL_XPIDL_MODULE_SUFFIX := js
+endif
+
 include $(BUILD_SHARED_LIBRARY)
 
 export_idls: $(patsubst %.idl,$(XPIDL_PATH)/%.idl,$(LOCAL_XPCOM_IDLS)) xpidl_install_prereqs
@@ -157,11 +163,11 @@ export_headers: $(patsubst %.idl,$(XPIDL_OUT)/%.h,$(LOCAL_XPCOM_IDLS)) xpidl_ins
 
 $(LIBXUL_DIST)/include: $(DEPENDS_ON_GECKO)
 
-create_install_rdf:
+create_install_rdf: xpidl_prereqs
 	build/core/create_install_rdf $(XPIDL_OUT)/install.rdf $(LOCAL_XPCOM_MODULE_UUID) $(LOCAL_XPCOM_MODULE_BOOTSTRAP)
 
-create_chrome_manifest:
-	build/core/create_chrome_manifest $(XPIDL_OUT)/chrome.manifest $(LOCAL_XPCOM_MODULE_CLASSID) $(LOCAL_XPCOM_MODULE_CONTRACTID) $(XPIDL_MODULE).so $(LOCAL_XPCOM_MODULE_NAVIGATOR_NAME)
+create_chrome_manifest: xpidl_prereqs
+	build/core/create_chrome_manifest $(XPIDL_OUT)/chrome.manifest $(LOCAL_XPCOM_MODULE_CLASSID) $(LOCAL_XPCOM_MODULE_CONTRACTID) $(XPIDL_MODULE).$(LOCAL_XPIDL_MODULE_SUFFIX) $(LOCAL_XPCOM_MODULE_NAVIGATOR_NAME)
 
 install_js_srcs:
 

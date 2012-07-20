@@ -1,8 +1,17 @@
 diff --git a/Makefile b/Makefile
-index 0a8cfe6..5ed8caa 100644
+index c29c625..4a0038a 100644
 --- a/Makefile
 +++ b/Makefile
-@@ -32,7 +32,7 @@ DEBUG?=0
+@@ -15,7 +15,7 @@
+ #                                                                             #
+ # REPORTER    : Mocha reporter to use for test output.                        #
+ #                                                                             #
+-# GAIA_APP_SRCDIRS : list of directories to search for web apps               #
++# GAIA_APP_SRCDIRS : list of directories (abs path) to search for web apps    #
+ #                                                                             #
+ ###############################################################################
+ -include local.mk
+@@ -40,7 +40,7 @@ BUILD_APP_NAME?=*
  
  REPORTER=Spec
  
@@ -11,7 +20,7 @@ index 0a8cfe6..5ed8caa 100644
  
  GAIA_ALL_APP_SRCDIRS=$(GAIA_APP_SRCDIRS)
  
-@@ -40,9 +40,9 @@ GAIA_APP_RELATIVEPATH=$(foreach dir, $(GAIA_APP_SRCDIRS), $(wildcard $(dir)/*))
+@@ -48,9 +48,9 @@ GAIA_APP_RELATIVEPATH=$(foreach dir, $(GAIA_APP_SRCDIRS), $(wildcard $(dir)/*))
  
  ifeq ($(MAKECMDGOALS), demo)
  GAIA_DOMAIN=thisdomaindoesnotexist.org
@@ -23,6 +32,28 @@ index 0a8cfe6..5ed8caa 100644
  endif
  
  
+@@ -301,6 +301,7 @@ permissions: install-xulrunner-sdk
+ 
+ # Generate profile/extensions
+ EXT_DIR=profile/extensions
++HTTPD_ROOT=$(abspath $(EXT_DIR)/httpd/root)
+ extensions:
+ 	@echo "Generating extensions..."
+ 	@mkdir -p profile
+@@ -308,10 +309,11 @@ extensions:
+ ifeq ($(DEBUG),1)
+ 	cp -r tools/extensions $(EXT_DIR)
+ 	# httpd
++	mkdir -p $(HTTPD_ROOT)
++	@$(foreach APP,$(GAIA_APP_RELATIVEPATH),ln -s $(APP) $(HTTPD_ROOT) &&) true
+ 	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DIR@|$(CURDIR)|g' $(EXT_DIR)/httpd@gaiamobile.org
+ 	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DOMAIN@|$(GAIA_DOMAIN)|g' $(EXT_DIR)/httpd/content/httpd.js
+-	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_APP_RELATIVEPATH@|$(GAIA_APP_RELATIVEPATH)|g' $(EXT_DIR)/httpd/content/httpd.js
+-	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DIR@|$(CURDIR)|g' $(EXT_DIR)/httpd/bootstrap.js
++	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DIR@|$(HTTPD_ROOT)|g' $(EXT_DIR)/httpd/bootstrap.js
+ 	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DOMAIN@|$(GAIA_DOMAIN)|g' $(EXT_DIR)/httpd/bootstrap.js
+ 	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_PORT@|$(subst :,,$(GAIA_PORT))|g' $(EXT_DIR)/httpd/bootstrap.js
+ 	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_APP_SRCDIRS@|$(GAIA_APP_SRCDIRS)|g' $(EXT_DIR)/httpd/bootstrap.js
 diff --git a/build/offline-cache.js b/build/offline-cache.js
 index 39a7e14..292412e 100644
 --- a/build/offline-cache.js
@@ -57,8 +88,32 @@ index 39a7e14..292412e 100644
  
      const base = manifest.path;
      manifest.append(dir);
+diff --git a/build/permissions.js b/build/permissions.js
+index f1d249a..305febe 100644
+--- a/build/permissions.js
++++ b/build/permissions.js
+@@ -8,8 +8,7 @@ function debug(msg) {
+ function getSubDirectories(directory) {
+   let appsDir = Cc["@mozilla.org/file/local;1"]
+                .createInstance(Ci.nsILocalFile);
+-  appsDir.initWithPath(GAIA_DIR);
+-  appsDir.append(directory);
++  appsDir.initWithPath(directory);
+ 
+   let dirs = [];
+   let files = appsDir.directoryEntries;
+@@ -46,8 +45,7 @@ function getFileContent(file) {
+ function getJSON(root, dir, name) {
+   let file = Cc["@mozilla.org/file/local;1"]
+                .createInstance(Ci.nsILocalFile);
+-  file.initWithPath(GAIA_DIR);
+-  file.append(root);
++  file.initWithPath(root);
+   file.append(dir);
+   file.append(name);
+ 
 diff --git a/build/preferences.js b/build/preferences.js
-index 6c1c85f..04df482 100644
+index 6e75638..0eedbdc 100644
 --- a/build/preferences.js
 +++ b/build/preferences.js
 @@ -4,8 +4,7 @@ const { 'classes': Cc, 'interfaces': Ci, 'results': Cr, } = Components;
@@ -81,3 +136,66 @@ index 6c1c85f..04df482 100644
    file.append(dir);
    file.append(name);
  
+diff --git a/tools/extensions/httpd/bootstrap.js b/tools/extensions/httpd/bootstrap.js
+index 02de4bc..abf957e 100644
+--- a/tools/extensions/httpd/bootstrap.js
++++ b/tools/extensions/httpd/bootstrap.js
+@@ -43,7 +43,7 @@ function startup(data, reason) {
+     let host = '@GAIA_DOMAIN@';
+     identity.add(scheme, host, port);
+   
+-    let directories = getDirectories(baseDir);
++    let directories = getDirectories();
+     directories.forEach(function appendDir(name) {
+       identity.add(scheme, name + '.' + host, port);
+     });
+@@ -51,15 +51,14 @@ function startup(data, reason) {
+     server.registerPathHandler('/marionette', MarionetteHandler);
+   }
+   
+-  function getDirectories(dir) {
++  function getDirectories() {
+     let dirs = [];
+     let appSrcDirs = '@GAIA_APP_SRCDIRS@'.split(' ');
+ 
+     appSrcDirs.forEach(function addDirectory(name) {
+       let appsDir = Cc['@mozilla.org/file/local;1']
+                       .createInstance(Ci.nsILocalFile);
+-      appsDir.initWithPath(dir);
+-      appsDir.append(name);
++      appsDir.initWithPath(name);
+ 
+       let files = appsDir.directoryEntries;
+       while (files.hasMoreElements()) {
+diff --git a/tools/extensions/httpd/content/httpd.js b/tools/extensions/httpd/content/httpd.js
+index acf1e80..743ee2b 100644
+--- a/tools/extensions/httpd/content/httpd.js
++++ b/tools/extensions/httpd/content/httpd.js
+@@ -1452,23 +1452,7 @@ RequestReader.prototype =
+    * according to GAIA_APP_RELATIVEPATH provided by Makefile. 
+    */ 
+   _findRealPath: function(appName) {
+-    if (this._realPath) {
+-      return this._realPath[appName];
+-    }
+-
+-    this._realPath = {};
+-
+-    var appPathList = "@GAIA_APP_RELATIVEPATH@".trim().split(" ");
+-    for (var i = 0; i < appPathList.length; i++) {
+-      var currentAppName = appPathList[i].split('/')[1];
+-
+-      if (!currentAppName) {
+-        continue;
+-      }
+-
+-      this._realPath[currentAppName] = appPathList[i];
+-    }
+-    return '/' + this._realPath[appName];
++    return '/' + appName;
+   },
+ 
+   /**
+-- 
+1.7.8.3
+

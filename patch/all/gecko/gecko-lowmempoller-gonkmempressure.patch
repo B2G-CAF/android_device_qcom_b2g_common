@@ -1,9 +1,9 @@
-diff --git a/hal/gonk/GonkMemPressure.cpp b/hal/gonk/GonkMemPressure.cpp
+diff --git a/widget/gonk/GonkMemPressure.cpp b/widget/gonk/GonkMemPressure.cpp
 new file mode 100644
-index 0000000..49cb8bd
+index 0000000..17f12ad
 --- /dev/null
-+++ b/hal/gonk/GonkMemPressure.cpp
-@@ -0,0 +1,162 @@
++++ b/widget/gonk/GonkMemPressure.cpp
+@@ -0,0 +1,160 @@
 +/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
 +
@@ -39,7 +39,7 @@ index 0000000..49cb8bd
 +#include "nsCOMPtr.h"
 +#include "nsThreadUtils.h"
 +#include "mozilla/Services.h"
-+#include "mozilla/Hal.h"
++#include "GonkMemPressure.h"
 +
 +#include "nsIObserverService.h"
 +
@@ -54,7 +54,7 @@ index 0000000..49cb8bd
 +
 +#define LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "GonkMemPressure" , ## args)
 +
-+namespace mozilla {
++namespace {
 +
 +class MemPressureRunnable : public nsRunnable
 +{
@@ -70,8 +70,6 @@ index 0000000..49cb8bd
 +		}
 +};
 +
-+
-+namespace hal_impl {
 +
 +static nsCOMPtr<nsIThread> sMemPressureThread;
 +static bool sActiveNotification;
@@ -149,6 +147,8 @@ index 0000000..49cb8bd
 +
 +nsCOMPtr<nsIRunnable> MemPressurePoller::mRunnable = NULL;
 +
++};
++
 +void
 +EnableMemoryPressureNotifications()
 +{
@@ -164,5 +164,88 @@ index 0000000..49cb8bd
 +	sActiveNotification = false;
 +}
 +
-+} //hal_impl
-+} // mozilla
+diff --git a/widget/gonk/GonkMemPressure.h b/widget/gonk/GonkMemPressure.h
+new file mode 100644
+index 0000000..4e50ec8
+--- /dev/null
++++ b/widget/gonk/GonkMemPressure.h
+@@ -0,0 +1,36 @@
++/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
++
++Redistribution and use in source and binary forms, with or without
++modification, are permitted provided that the following conditions are
++met:
++    * Redistributions of source code must retain the above copyright
++      notice, this list of conditions and the following disclaimer.
++    * Redistributions in binary form must reproduce the above
++      copyright notice, this list of conditions and the following
++      disclaimer in the documentation and/or other materials provided
++      with the distribution.
++    * Neither the name of Code Aurora Forum, Inc. nor the names of its
++      contributors may be used to endorse or promote products derived
++      from this software without specific prior written permission.
++
++THIS SOFTWARE IS PROVIDED "AS IS" AND ANY EXPRESS OR IMPLIED
++WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
++MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT
++ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS
++BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
++CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
++SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR
++BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
++WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
++OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
++IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
++*/
++
++#ifndef GONKMEMPRESSURE_H
++#define GONKMEMPRESSURE_H
++
++void EnableMemoryPressureNotifications();
++void DisableMemoryPressureNotifications();
++
++#endif /* GONKMEMPRESSURE_H */
+diff --git a/widget/gonk/Makefile.in b/widget/gonk/Makefile.in
+index c45c7b5..e33fef0 100644
+--- a/widget/gonk/Makefile.in
++++ b/widget/gonk/Makefile.in
+@@ -41,6 +41,7 @@ CPPSRCS	= \
+ 	nsIdleServiceGonk.cpp \
+ 	OrientationObserver.cpp \
+ 	EventHub.cpp \
++	GonkMemPressure.cpp \
+ 	Input.cpp \
+ 	InputApplication.cpp \
+ 	InputDispatcher.cpp \
+diff --git a/widget/gonk/nsAppShell.cpp b/widget/gonk/nsAppShell.cpp
+index bb0e176..d6bd06f 100644
+--- a/widget/gonk/nsAppShell.cpp
++++ b/widget/gonk/nsAppShell.cpp
+@@ -43,6 +43,7 @@
+ #include "nsScreenManagerGonk.h"
+ #include "nsWindow.h"
+ #include "OrientationObserver.h"
++#include "GonkMemPressure.h"
+ 
+ #include "android/log.h"
+ #include "libui/EventHub.h"
+@@ -493,6 +494,7 @@ nsAppShell::nsAppShell()
+ 
+ nsAppShell::~nsAppShell()
+ {
++    DisableMemoryPressureNotifications();
+     status_t result = mReaderThread->requestExitAndWait();
+     if (result)
+         LOG("Could not stop reader thread - %d", result);
+@@ -541,6 +543,7 @@ nsAppShell::InitInputDevices()
+     if (result) {
+         LOG("Failed to initialize InputReader thread, bad things are going to happen...");
+     }
++    EnableMemoryPressureNotifications();
+ }
+ 
+ nsresult
+-- 
+1.7.8.3
+

@@ -1,5 +1,5 @@
 diff --git a/Makefile b/Makefile
-index c29c625..4a0038a 100644
+index 581e6b1..065a022 100644
 --- a/Makefile
 +++ b/Makefile
 @@ -15,7 +15,7 @@
@@ -32,7 +32,7 @@ index c29c625..4a0038a 100644
  endif
  
  
-@@ -301,6 +301,7 @@ permissions: install-xulrunner-sdk
+@@ -316,6 +316,7 @@ permissions: install-xulrunner-sdk
  
  # Generate profile/extensions
  EXT_DIR=profile/extensions
@@ -40,16 +40,15 @@ index c29c625..4a0038a 100644
  extensions:
  	@echo "Generating extensions..."
  	@mkdir -p profile
-@@ -308,10 +309,11 @@ extensions:
+@@ -323,9 +324,10 @@ extensions:
  ifeq ($(DEBUG),1)
  	cp -r tools/extensions $(EXT_DIR)
  	# httpd
 +	mkdir -p $(HTTPD_ROOT)
 +	@$(foreach APP,$(GAIA_APP_RELATIVEPATH),ln -s $(APP) $(HTTPD_ROOT) &&) true
- 	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DIR@|$(CURDIR)|g' $(EXT_DIR)/httpd@gaiamobile.org
  	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DOMAIN@|$(GAIA_DOMAIN)|g' $(EXT_DIR)/httpd/content/httpd.js
 -	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_APP_RELATIVEPATH@|$(GAIA_APP_RELATIVEPATH)|g' $(EXT_DIR)/httpd/content/httpd.js
--	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DIR@|$(CURDIR)|g' $(EXT_DIR)/httpd/bootstrap.js
+-	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DIR@|$(subst \\,\\\\,$(CURDIR))|g' $(EXT_DIR)/httpd/bootstrap.js
 +	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DIR@|$(HTTPD_ROOT)|g' $(EXT_DIR)/httpd/bootstrap.js
  	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_DOMAIN@|$(GAIA_DOMAIN)|g' $(EXT_DIR)/httpd/bootstrap.js
  	@$(SED_INPLACE_NO_SUFFIX) -e 's|@GAIA_PORT@|$(subst :,,$(GAIA_PORT))|g' $(EXT_DIR)/httpd/bootstrap.js
@@ -113,7 +112,7 @@ index f1d249a..305febe 100644
    file.append(name);
  
 diff --git a/build/preferences.js b/build/preferences.js
-index 6e75638..0eedbdc 100644
+index 349f0b3..f190257 100644
 --- a/build/preferences.js
 +++ b/build/preferences.js
 @@ -4,8 +4,7 @@ const { 'classes': Cc, 'interfaces': Ci, 'results': Cr, } = Components;
@@ -196,6 +195,3 @@ index acf1e80..743ee2b 100644
    },
  
    /**
--- 
-1.7.8.3
-

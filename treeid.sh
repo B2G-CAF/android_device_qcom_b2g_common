@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # Attempt to identify the Android tree in use.  On success one or more
 # tree identifiers are output to stdout.

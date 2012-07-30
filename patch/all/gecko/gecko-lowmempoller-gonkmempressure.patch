@@ -1,10 +1,11 @@
 diff --git a/widget/gonk/GonkMemPressure.cpp b/widget/gonk/GonkMemPressure.cpp
 new file mode 100644
-index 0000000..17f12ad
+index 0000000..e5b0423
 --- /dev/null
 +++ b/widget/gonk/GonkMemPressure.cpp
-@@ -0,0 +1,160 @@
-+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+@@ -0,0 +1,144 @@
++/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* vim: set ts=2 et sw=2 tw=80: */
 +/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
 +
 +Redistribution and use in source and binary forms, with or without
@@ -35,17 +36,12 @@ index 0000000..17f12ad
 +
 +#include "base/basictypes.h"
 +#include "nspr/prtypes.h"
-+
 +#include "nsCOMPtr.h"
 +#include "nsThreadUtils.h"
 +#include "mozilla/Services.h"
 +#include "GonkMemPressure.h"
-+
 +#include "nsIObserverService.h"
-+
 +#include <android/log.h>
-+#include <string>
-+
 +#include <stdlib.h>
 +#include <fcntl.h>
 +#include <sys/types.h>
@@ -54,123 +50,112 @@ index 0000000..17f12ad
 +
 +#define LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "GonkMemPressure" , ## args)
 +
++using namespace mozilla;
++
 +namespace {
 +
 +class MemPressureRunnable : public nsRunnable
 +{
-+	public:
-+		NS_IMETHOD Run()
-+		{
-+			  LOG("Dispatching memory-pressure to listeners");
-+			  nsCOMPtr<nsIObserverService> obsServ =
-+					mozilla::services::GetObserverService();
-+			  NS_NAMED_LITERAL_STRING(minimize, "heap-minimize");
-+			  obsServ->NotifyObservers(nsnull, "memory-pressure", minimize.get());
-+			  return NS_OK;
-+		}
++public:
++  NS_IMETHOD Run()
++  {
++    LOG("Dispatching memory-pressure to listeners");
++    nsCOMPtr<nsIObserverService> obsServ =
++      mozilla::services::GetObserverService();
++    NS_NAMED_LITERAL_STRING(minimize, "heap-minimize");
++    obsServ->NotifyObservers(nsnull, "memory-pressure", minimize.get());
++    return NS_OK;
++  }
 +};
 +
 +
 +static nsCOMPtr<nsIThread> sMemPressureThread;
-+static bool sActiveNotification;
-+
-+class SysFsPoller {
-+	public:
-+		int Poll() {
-+			struct pollfd fds[1];
-+			char buf[3];
-+			int err;
-+
-+			fds[0].fd = open(sysfs_node.c_str(), O_RDONLY);
-+			if (fds[0].fd < 0) {
-+				LOG("Error, could not open sysfs node\n");
-+				return -1;
-+			}
-+			(void)read(fds[0].fd, buf, 2);
-+			fds[0].events = POLLERR | POLLPRI;
-+			err = poll(fds, 1, -1);
-+			if (err > 0) {
-+				(void)read(fds[0].fd, buf, 2);
-+				if (fds[0].revents & POLLPRI || fds[0].revents & POLLERR)
-+					err = 0;
-+				else {
-+					LOG("Received unrecognized poll event, mask 0x%x\n", fds[0].revents);
-+					err = -1;
-+				}
-+			} else {
-+				err = -1;
-+			}
-+			close(fds[0].fd);
-+			return err;
-+		}
-+
-+		SysFsPoller(const char *node) :
-+			sysfs_node(node) {
-+	   }
-+	private:
-+		std::string sysfs_node;
-+};
++static nsCOMPtr<nsIRunnable> sRunnable;
++static int sFd;
 +
 +class MemPressurePoller {
-+	public:
-+		NS_INLINE_DECL_REFCOUNTING(MemPressurePoller);
++public:
++  NS_INLINE_DECL_REFCOUNTING(MemPressurePoller);
 +
-+		MemPressurePoller() :
-+			poller("/sys/kernel/mm/lowmemkiller/notify_trigger_active") {
-+		}
-+
-+		static nsCOMPtr<nsIRunnable> GetRunnable() {
-+			if (!mRunnable)
-+				mRunnable = NS_NewRunnableMethod(new MemPressurePoller(), &MemPressurePoller::Poll);
-+			return mRunnable;
-+		}
-+
-+		void Poll() {
-+			int ret = poller.Poll();
-+			if (ret < 0) {
-+				LOG("Error polling for mempressure sysfs node (err=%d)", ret);
-+				return;
-+			}
-+
-+			NS_DispatchToMainThread(new MemPressureRunnable());
-+
-+			if (sActiveNotification) {
-+				sMemPressureThread->Dispatch(GetRunnable(), NS_DISPATCH_NORMAL);
-+			}
-+		}
-+
-+	private:
-+		static nsCOMPtr<nsIRunnable> mRunnable;
-+		SysFsPoller poller;
-+		const char* sysfs_node;
++  MemPressurePoller() {}
++  static nsCOMPtr<nsIRunnable> GetRunnable()
++  {
++    if (!sRunnable) {
++      sRunnable = NS_NewRunnableMethod(new MemPressurePoller(),
++        &MemPressurePoller::Poll);
++    }
++    return sRunnable;
++  }
++  void Poll();
 +};
 +
-+nsCOMPtr<nsIRunnable> MemPressurePoller::mRunnable = NULL;
-+
-+};
 +
 +void
-+EnableMemoryPressureNotifications()
++MemPressurePoller::Poll()
 +{
-+	sActiveNotification = true;
-+	if (sMemPressureThread == nsnull) {
-+		NS_NewThread(getter_AddRefs(sMemPressureThread), MemPressurePoller::GetRunnable());
-+	}
++  if (sFd <= 0) {
++    return;
++  }
++
++  lseek(sFd, 0, SEEK_SET);
++
++  // The notify_trigger_active sysfs node is known to contain two bytes:
++  //     "0\n" or "1\n"
++  char buf[2];
++  int numbytes = read(sFd, buf, 2);
++
++  if (2 == numbytes) {
++    // Emit a "memory-pressure" event if beneath the threshold
++    if ('1' == buf[0]) {
++      NS_DispatchToMainThread(new MemPressureRunnable());
++    }
++
++    // Wait for sysfs node to change again
++    struct pollfd fd;
++    fd.fd = sFd;
++    fd.events = POLLERR | POLLPRI;
++    poll(&fd, 1, -1);
++  }
++
++  sMemPressureThread->Dispatch(GetRunnable(), NS_DISPATCH_NORMAL);
++}
++
++};
++
++
++namespace mozilla {
++
++void
++GonkMemPresureEnable()
++{
++  sFd = open("/sys/kernel/mm/lowmemkiller/notify_trigger_active",
++    O_RDONLY | O_CLOEXEC);
++  if (sFd > 0) {
++    if (sMemPressureThread == nsnull) {
++      NS_NewThread(getter_AddRefs(sMemPressureThread),
++        MemPressurePoller::GetRunnable());
++    }
++  }
 +}
 +
 +void
-+DisableMemoryPressureNotifications()
++GonkMemPresureDisable()
 +{
-+	sActiveNotification = false;
++  if (sFd > 0) {
++    close(sFd);
++    sFd = 0;
++  }
 +}
 +
++};
 diff --git a/widget/gonk/GonkMemPressure.h b/widget/gonk/GonkMemPressure.h
 new file mode 100644
-index 0000000..4e50ec8
+index 0000000..e16433b
 --- /dev/null
 +++ b/widget/gonk/GonkMemPressure.h
-@@ -0,0 +1,36 @@
-+/* -*- Mode: C++; tab-width: 2; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
+@@ -0,0 +1,39 @@
++/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
++/* vim: set ts=2 et sw=2 tw=80: */
 +/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
 +
 +Redistribution and use in source and binary forms, with or without
@@ -202,8 +187,10 @@ index 0000000..4e50ec8
 +#ifndef GONKMEMPRESSURE_H
 +#define GONKMEMPRESSURE_H
 +
-+void EnableMemoryPressureNotifications();
-+void DisableMemoryPressureNotifications();
++namespace mozilla {
++void GonkMemPresureEnable();
++void GonkMemPresureDisable();
++}
 +
 +#endif /* GONKMEMPRESSURE_H */
 diff --git a/widget/gonk/Makefile.in b/widget/gonk/Makefile.in
@@ -219,7 +206,7 @@ index c45c7b5..e33fef0 100644
  	InputApplication.cpp \
  	InputDispatcher.cpp \
 diff --git a/widget/gonk/nsAppShell.cpp b/widget/gonk/nsAppShell.cpp
-index bb0e176..d6bd06f 100644
+index bb0e176..ab20ba3 100644
 --- a/widget/gonk/nsAppShell.cpp
 +++ b/widget/gonk/nsAppShell.cpp
 @@ -43,6 +43,7 @@
@@ -234,7 +221,7 @@ index bb0e176..d6bd06f 100644
  
  nsAppShell::~nsAppShell()
  {
-+    DisableMemoryPressureNotifications();
++    GonkMemPresureDisable();
      status_t result = mReaderThread->requestExitAndWait();
      if (result)
          LOG("Could not stop reader thread - %d", result);
@@ -242,7 +229,7 @@ index bb0e176..d6bd06f 100644
      if (result) {
          LOG("Failed to initialize InputReader thread, bad things are going to happen...");
      }
-+    EnableMemoryPressureNotifications();
++    GonkMemPresureEnable();
  }
  
  nsresult

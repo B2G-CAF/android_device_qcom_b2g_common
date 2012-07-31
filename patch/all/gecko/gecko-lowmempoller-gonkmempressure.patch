@@ -206,7 +206,7 @@ index c45c7b5..e33fef0 100644
  	InputApplication.cpp \
  	InputDispatcher.cpp \
 diff --git a/widget/gonk/nsAppShell.cpp b/widget/gonk/nsAppShell.cpp
-index bb0e176..ab20ba3 100644
+index bb0e176..4cc488a 100644
 --- a/widget/gonk/nsAppShell.cpp
 +++ b/widget/gonk/nsAppShell.cpp
 @@ -43,6 +43,7 @@
@@ -225,14 +225,15 @@ index bb0e176..ab20ba3 100644
      status_t result = mReaderThread->requestExitAndWait();
      if (result)
          LOG("Could not stop reader thread - %d", result);
-@@ -541,6 +543,7 @@ nsAppShell::InitInputDevices()
-     if (result) {
-         LOG("Failed to initialize InputReader thread, bad things are going to happen...");
-     }
-+    GonkMemPresureEnable();
- }
+@@ -514,6 +516,8 @@ nsAppShell::Init()
+     rv = AddFdHandler(signalfds[0], pipeHandler, "");
+     NS_ENSURE_SUCCESS(rv, rv);
  
- nsresult
++    GonkMemPresureEnable();
++
+     // Delay initializing input devices until the screen has been
+     // initialized (and we know the resolution).
+     return rv;
 -- 
 1.7.8.3
 

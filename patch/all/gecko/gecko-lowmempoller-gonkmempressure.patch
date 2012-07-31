@@ -1,9 +1,9 @@
 diff --git a/widget/gonk/GonkMemPressure.cpp b/widget/gonk/GonkMemPressure.cpp
 new file mode 100644
-index 0000000..e5b0423
+index 0000000..b212fd6
 --- /dev/null
 +++ b/widget/gonk/GonkMemPressure.cpp
-@@ -0,0 +1,144 @@
+@@ -0,0 +1,179 @@
 +/* -*- Mode: C++; tab-width: 8; indent-tabs-mode: nil; c-basic-offset: 2 -*- */
 +/* vim: set ts=2 et sw=2 tw=80: */
 +/* Copyright (c) 2012, Code Aurora Forum. All rights reserved.
@@ -38,9 +38,11 @@ index 0000000..e5b0423
 +#include "nspr/prtypes.h"
 +#include "nsCOMPtr.h"
 +#include "nsThreadUtils.h"
++#include "nsITimer.h"
 +#include "mozilla/Services.h"
 +#include "GonkMemPressure.h"
 +#include "nsIObserverService.h"
++#include "nsComponentManagerUtils.h"
 +#include <android/log.h>
 +#include <stdlib.h>
 +#include <fcntl.h>
@@ -48,7 +50,11 @@ index 0000000..e5b0423
 +#include <sys/stat.h>
 +#include <poll.h>
 +
-+#define LOG(args...)  __android_log_print(ANDROID_LOG_INFO, "GonkMemPressure" , ## args)
++#define LOG(args...)  \
++  __android_log_print(ANDROID_LOG_INFO, "GonkMemPressure" , ## args)
++
++// Minimum time between emitting successive memory-pressure events
++#define COOLDOWN_TIME_MS (15*1000) // FIXME: 15s was mostly chosen at random...
 +
 +using namespace mozilla;
 +
@@ -59,7 +65,7 @@ index 0000000..e5b0423
 +public:
 +  NS_IMETHOD Run()
 +  {
-+    LOG("Dispatching memory-pressure to listeners");
++    LOG("Dispatching memory-pressure event");
 +    nsCOMPtr<nsIObserverService> obsServ =
 +      mozilla::services::GetObserverService();
 +    NS_NAMED_LITERAL_STRING(minimize, "heap-minimize");
@@ -77,7 +83,16 @@ index 0000000..e5b0423
 +public:
 +  NS_INLINE_DECL_REFCOUNTING(MemPressurePoller);
 +
-+  MemPressurePoller() {}
++  MemPressurePoller() {
++    mTimer = do_CreateInstance("@mozilla.org/timer;1");
++
++    // sysfs nodes need to be read before they can be
++    // successfully polled.  Prime MemPressurePoller::Poll()
++    // by trying to perform the first read here
++    char buf[2];
++    read(sFd, buf, 2);
++  }
++
 +  static nsCOMPtr<nsIRunnable> GetRunnable()
 +  {
 +    if (!sRunnable) {
@@ -87,6 +102,11 @@ index 0000000..e5b0423
 +    return sRunnable;
 +  }
 +  void Poll();
++
++private:
++  static void TimerDispatch(nsITimer *aTimer, void *aClosure);
++
++  nsCOMPtr<nsITimer> mTimer;
 +};
 +
 +
@@ -96,6 +116,12 @@ index 0000000..e5b0423
 +  if (sFd <= 0) {
 +    return;
 +  }
++
++  // Wait for sysfs node to change.
++  struct pollfd fd;
++  fd.fd = sFd;
++  fd.events = POLLERR | POLLPRI;
++  poll(&fd, 1, -1);
 +
 +  lseek(sFd, 0, SEEK_SET);
 +
@@ -109,15 +135,22 @@ index 0000000..e5b0423
 +    if ('1' == buf[0]) {
 +      NS_DispatchToMainThread(new MemPressureRunnable());
 +    }
-+
-+    // Wait for sysfs node to change again
-+    struct pollfd fd;
-+    fd.fd = sFd;
-+    fd.events = POLLERR | POLLPRI;
-+    poll(&fd, 1, -1);
 +  }
 +
-+  sMemPressureThread->Dispatch(GetRunnable(), NS_DISPATCH_NORMAL);
++  if (mTimer) {
++    LOG("notify_trigger_active cool down timer scheduled");
++    mTimer->Cancel();
++    mTimer->InitWithFuncCallback(TimerDispatch, 0, COOLDOWN_TIME_MS,
++      nsITimer::TYPE_ONE_SHOT);
++  }
++}
++
++/*static*/
++void
++MemPressurePoller::TimerDispatch(nsITimer *aTimer, void *aClosure)
++{
++  sMemPressureThread->Dispatch(MemPressurePoller::GetRunnable(),
++    NS_DISPATCH_NORMAL);
 +}
 +
 +};
@@ -145,6 +178,8 @@ index 0000000..e5b0423
 +    close(sFd);
 +    sFd = 0;
 +  }
++  sRunnable = nsnull;
++  sMemPressureThread = nsnull;
 +}
 +
 +};

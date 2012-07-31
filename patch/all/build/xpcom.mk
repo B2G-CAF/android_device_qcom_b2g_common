@@ -3,9 +3,28 @@
 # and typelibs, along with installing into Gecko
 #
 
+# Global note: If any of the make rule commands include references to
+# $(LOCAL...) variables, they have to be saved in target private variables
+# otherwise they will have whatever value they happen to have when the
+# target is executed, which is not what we want.
+# The reason is that rules don't execute in the first pass through
+# the makefile, and by the time they execute, any variable references
+# in the rule are essentially environment variables, with whatever
+# value they were last assigned to (not necessarily what the source
+# makefile assigned  to them in the first pass)
+#
+# For example
+# $(LOCAL_XPCOM_MODULE)-somerule:
+# 	@mkdir $(LOCAL_XPCOM_MODULE)_objdir
+# is incorrect. Replace with:
+# $(LOCAL_XPCOM_MODULE)-somerule: PRIVATE_XPCOM_MODULE := $(LOCAL_XPCOM_MODULE)
+# $(LOCAL_XPCOM_MODULE)-somerule:
+# 	@mkdir $(PRIVATE_XPCOM_MODULE)_objdir
+
 # Setting up module name and directories
 # Name of module
 LOCAL_XPCOM_MODULE := $(LOCAL_MODULE)
+
 # Home directory of the module source
 LOCAL_XPIDL_PATH := $(LOCAL_PATH)
 # The directory where this component's intermediates will be put by Android build system
@@ -42,8 +61,10 @@ LOCAL_XPIDL_FLAGS := -I$(LOCAL_XPIDL_PATH) -I$(LIBXUL_DIST)/idl
 # that we depend on
 DEPENDS_ON_GECKO := $(TARGET_OUT)/b2g/distribution
 
+$(LOCAL_XPCOM_MODULE)-xpidl_prereqs: PRIVATE_XPIDL_OUT := $(LOCAL_XPIDL_OUT)
+
 $(LOCAL_XPCOM_MODULE)-xpidl_prereqs:
-	@mkdir -p $(LOCAL_XPIDL_OUT)
+	@mkdir -p $(PRIVATE_XPIDL_OUT)
 
 XPIDL_DEPS := $(LIBXUL_DIST)/sdk/bin/header.py \
               $(LIBXUL_DIST)/sdk/bin/typelib.py \
@@ -79,14 +100,16 @@ endef
 
 $(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES), $(eval $(call add-notice-static-dep,$(lib))))
 
-install_gecko_libs: $(DEPENDS_ON_GECKO)
-	$(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES),\
+$(LOCAL_XPCOM_MODULE)-install_gecko_libs: PRIVATE_XPCOM_STATIC_LIBRARIES := $(LOCAL_XPCOM_STATIC_LIBRARIES)
+$(LOCAL_XPCOM_MODULE)-install_gecko_libs: PRIVATE_XPCOM_SHARED_LIBRARIES := $(LOCAL_XPCOM_SHARED_LIBRARIES)
+$(LOCAL_XPCOM_MODULE)-install_gecko_libs: $(DEPENDS_ON_GECKO)
+	$(foreach lib,$(PRIVATE_XPCOM_STATIC_LIBRARIES),\
 		mkdir -p $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_intermediates && \
-		cp $(GECKO_OBJDIR)/dist/lib/$(lib).a $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_INTERMEDIATES && \
+		cp $(GECKO_OBJDIR)/dist/lib/$(lib).a $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_intermediates && \
 		cp $(GECKO_OBJDIR)/dist/lib/$(lib).a $(TARGET_OUT_INTERMEDIATES)/lib;)
-	$(foreach lib,$(LOCAL_XPCOM_SHARED_LIBRARIES),\
-		mkdir -p $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_INTERMEDIATES && \
-		cp $(GECKO_OBJDIR)/dist/lib/$(lib).so $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_INTERMEDIATES && \
+	$(foreach lib,$(PRIVATE_XPCOM_SHARED_LIBRARIES),\
+		mkdir -p $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates && \
+		cp $(GECKO_OBJDIR)/dist/lib/$(lib).so $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates && \
 		cp $(GECKO_OBJDIR)/dist/lib/$(lib).so $(TARGET_OUT_INTERMEDIATES)/lib;)
 
 LOCAL_SHARED_LIBRARIES := $(LOCAL_SHARED_LIBRARIES) $(LOCAL_XPCOM_SHARED_LIBRARIES)
@@ -98,7 +121,7 @@ LOCAL_STATIC_LIBRARIES := $(LOCAL_STATIC_LIBRARIES) $(LOCAL_XPCOM_STATIC_LIBRARI
 # 3. The corresponding .xpt files
 # 4. The overall module .xpt file
 # 5. The export rules to copy idls and headers to $(LIBXUL_DIST)
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_ADDITIONAL_DEPENDENCIES) install_gecko_libs
+LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_ADDITIONAL_DEPENDENCIES) $(LOCAL_XPCOM_MODULE)-install_gecko_libs
 
 # Dependencies for IDL files
 ifneq (,$(strip $(LOCAL_XPCOM_IDLS)))
@@ -112,8 +135,9 @@ LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_ADDITIONAL_DEPENDENCIES) $(LOCAL_XPCOM_
 
 LOCAL_XPCOM_INSTALL_DIR := $(TARGET_OUT)/b2g/distribution/extensions/$(LOCAL_XPCOM_MODULE_UUID)
 
+$(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs: PRIVATE_XPCOM_INSTALL_DIR := $(LOCAL_XPCOM_INSTALL_DIR)
 $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs: $(DEPENDS_ON_GECKO)
-	@mkdir -p $(LOCAL_XPCOM_INSTALL_DIR)
+	@mkdir -p $(PRIVATE_XPCOM_INSTALL_DIR)
 
 $(LOCAL_XPIDL_OUT)/%.h: $(LOCAL_XPIDL_PATH)/%.idl $(XPIDL_DEPS) $(LOCAL_XPCOM_MODULE)-xpidl_prereqs
 	$(REPORT_BUILD)
@@ -125,9 +149,10 @@ $(LOCAL_XPIDL_OUT)/%.xpt: $(LOCAL_XPIDL_PATH)/%.idl $(XPIDL_DEPS) $(LOCAL_XPCOM_
 	$(REPORT_BUILD)
 	$(PYTHON_PATH) $(PLY_INCLUDE) -I$(GECKO_DIR)/xpcom/typelib/xpt/tools $(LIBXUL_DIST)/sdk/bin/typelib.py $(LOCAL_XPIDL_FLAGS) $(CURRENT_IDLS) -o $@
 
+$(LOCAL_XPIDL_OUT)/$(LOCAL_XPCOM_MODULE).xpt: PRIVATE_XPCOM_INSTALL_DIR := $(LOCAL_XPCOM_INSTALL_DIR)
 $(LOCAL_XPIDL_OUT)/$(LOCAL_XPCOM_MODULE).xpt: $(patsubst %.idl,$(LOCAL_XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS)) $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs
-	$(XPIDL_LINK) $(LOCAL_XPIDL_OUT)/$(LOCAL_XPCOM_MODULE).xpt $(patsubst %.idl,$(LOCAL_XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS))
-	$(INSTALL) $(INSTALL_FLAGS) $(LOCAL_XPIDL_OUT)/$(LOCAL_XPCOM_MODULE).xpt $(LOCAL_XPCOM_INSTALL_DIR)
+	$(XPIDL_LINK) $@ $(filter-out %-xpidl_install_prereqs, $^)
+	$(INSTALL) $(INSTALL_FLAGS) $@ $(PRIVATE_XPCOM_INSTALL_DIR)
 
 # Check to see if it is a pure JavaScript component
 LOCAL_JS_SRC_FILES := $(filter %.js,$(LOCAL_SRC_FILES))
@@ -138,32 +163,43 @@ include $(BUILD_SHARED_LIBRARY)
 
 # We need to install binary only if its not a pure JS component
 ifneq (,$(strip $(LOCAL_SRC_FILES)))
+$(LOCAL_INSTALLED_MODULE): PRIVATE_XPCOM_MODULE := $(LOCAL_XPCOM_MODULE)
+$(LOCAL_INSTALLED_MODULE): PRIVATE_XPCOM_INSTALL_DIR := $(LOCAL_XPCOM_INSTALL_DIR)
+$(LOCAL_INSTALLED_MODULE): PRIVATE_XPCOM_MODULE_OBJDIR := $(LOCAL_XPCOM_MODULE_OBJDIR)
 $(LOCAL_INSTALLED_MODULE):
-	cp $(LOCAL_XPCOM_MODULE_OBJDIR)/LINKED/$(LOCAL_XPCOM_MODULE).so $(LOCAL_XPCOM_INSTALL_DIR)
+	cp $(PRIVATE_XPCOM_MODULE_OBJDIR)/LINKED/$(PRIVATE_XPCOM_MODULE).so $(PRIVATE_XPCOM_INSTALL_DIR)
 endif
 
+$(LOCAL_XPCOM_MODULE)-export_idls: PRIVATE_XPCOM_INSTALL_DIR := $(LOCAL_XPCOM_INSTALL_DIR)
 $(LOCAL_XPCOM_MODULE)-export_idls: $(patsubst %.idl,$(LOCAL_XPIDL_PATH)/%.idl,$(LOCAL_XPCOM_IDLS)) $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs
-	$(INSTALL) $(INSTALL_FLAGS) $(patsubst %.idl,$(LOCAL_XPIDL_PATH)/%.idl,$(LOCAL_XPCOM_IDLS)) $(LOCAL_XPCOM_INSTALL_DIR)
+	$(INSTALL) $(INSTALL_FLAGS) $(filter-out %-xpidl_install_prereqs, $^) $(PRIVATE_XPCOM_INSTALL_DIR)
 
 $(LIBXUL_DIST)/idl: $(DEPENDS_ON_GECKO)
 
+$(LOCAL_XPCOM_MODULE)-export_headers: PRIVATE_XPCOM_INSTALL_DIR := $(LOCAL_XPCOM_INSTALL_DIR)
 $(LOCAL_XPCOM_MODULE)-export_headers: $(patsubst %.idl,$(LOCAL_XPIDL_OUT)/%.h,$(LOCAL_XPCOM_IDLS)) $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs
-	$(INSTALL) $(INSTALL_FLAGS) $(patsubst %.idl,$(LOCAL_XPIDL_OUT)/%.h,$(LOCAL_XPCOM_IDLS)) $(LOCAL_XPCOM_INSTALL_DIR)
+	$(INSTALL) $(INSTALL_FLAGS) $(filter-out %-xpidl_install_prereqs, $^) $(PRIVATE_XPCOM_INSTALL_DIR)
 
 $(LIBXUL_DIST)/include: $(DEPENDS_ON_GECKO)
 
 $(LOCAL_XPCOM_MODULE)-install_js_srcs:
 
 ifneq (,$(strip $(LOCAL_JS_SRC_FILES)))
+$(LOCAL_XPCOM_MODULE)-install_js_srcs: PRIVATE_JS_SRC_FILES := $(LOCAL_JS_SRC_FILES)
+$(LOCAL_XPCOM_MODULE)-install_js_srcs: PRIVATE_XPIDL_PATH := $(LOCAL_XPIDL_PATH)
+$(LOCAL_XPCOM_MODULE)-install_js_srcs: PRIVATE_XPCOM_INSTALL_DIR := $(LOCAL_XPCOM_INSTALL_DIR)
 $(LOCAL_XPCOM_MODULE)-install_js_srcs: $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs
-	$(foreach js,$(LOCAL_JS_SRC_FILES),$(shell cp $(LOCAL_XPIDL_PATH)/$(js) $(LOCAL_XPCOM_INSTALL_DIR)))
+	$(foreach js,$(PRIVATE_JS_SRC_FILES),$(shell cp $(PRIVATE_XPIDL_PATH)/$(js) $(PRIVATE_XPCOM_INSTALL_DIR)))
 endif
 
+$(LOCAL_XPCOM_MODULE)-xpcom_install: PRIVATE_XPIDL_PATH := $(LOCAL_XPIDL_PATH)
+$(LOCAL_XPCOM_MODULE)-xpcom_install: PRIVATE_XPCOM_INSTALL_DIR := $(LOCAL_XPCOM_INSTALL_DIR)
+$(LOCAL_XPCOM_MODULE)-xpcom_install: PRIVATE_XPCOM_MODULE := $(LOCAL_XPCOM_MODULE)
 $(LOCAL_XPCOM_MODULE)-xpcom_install: $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs $(LOCAL_XPCOM_MODULE)-install_js_srcs $(GECKO_DIR)/config/buildlist.py $(LOCAL_XPIDL_PATH)/install.rdf $(LOCAL_XPIDL_PATH)/chrome.manifest
-	@cp $(LOCAL_XPIDL_PATH)/install.rdf $(LOCAL_XPCOM_INSTALL_DIR)
-	@cp $(LOCAL_XPIDL_PATH)/chrome.manifest $(LOCAL_XPCOM_INSTALL_DIR)
-	@test -f $(LOCAL_XPIDL_PATH)/bootstrap.js && cp $(LOCAL_XPIDL_PATH)/bootstrap.js $(LOCAL_XPCOM_INSTALL_DIR)
-	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(LOCAL_XPCOM_INSTALL_DIR)/interfaces.manifest "interfaces $(LOCAL_XPCOM_MODULE).xpt"
-	@$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(LOCAL_XPCOM_INSTALL_DIR)/chrome.manifest "manifest interfaces.manifest"
+	@cp $(PRIVATE_XPIDL_PATH)/install.rdf $(PRIVATE_XPCOM_INSTALL_DIR)
+	@cp $(PRIVATE_XPIDL_PATH)/chrome.manifest $(PRIVATE_XPCOM_INSTALL_DIR)
+	@test -f $(PRIVATE_XPIDL_PATH)/bootstrap.js && cp $(PRIVATE_XPIDL_PATH)/bootstrap.js $(PRIVATE_XPCOM_INSTALL_DIR) || true
+	$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(PRIVATE_XPCOM_INSTALL_DIR)/interfaces.manifest "interfaces $(PRIVATE_XPCOM_MODULE).xpt"
+	$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(PRIVATE_XPCOM_INSTALL_DIR)/chrome.manifest "manifest interfaces.manifest"
 
 $(GECKO_DIR)/config/buildlist.py: $(DEPENDS_ON_GECKO)

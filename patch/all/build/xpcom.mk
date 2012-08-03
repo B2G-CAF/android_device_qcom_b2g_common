@@ -199,7 +199,9 @@ $(LOCAL_XPCOM_MODULE)-xpcom_install: $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs
 	@cp $(PRIVATE_XPIDL_PATH)/install.rdf $(PRIVATE_XPCOM_INSTALL_DIR)
 	@cp $(PRIVATE_XPIDL_PATH)/chrome.manifest $(PRIVATE_XPCOM_INSTALL_DIR)
 	@test -f $(PRIVATE_XPIDL_PATH)/bootstrap.js && cp $(PRIVATE_XPIDL_PATH)/bootstrap.js $(PRIVATE_XPCOM_INSTALL_DIR) || true
+ifneq (,$(strip $(LOCAL_XPCOM_IDLS)))
 	$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(PRIVATE_XPCOM_INSTALL_DIR)/interfaces.manifest "interfaces $(PRIVATE_XPCOM_MODULE).xpt"
 	$(PYTHON) $(GECKO_DIR)/config/buildlist.py $(PRIVATE_XPCOM_INSTALL_DIR)/chrome.manifest "manifest interfaces.manifest"
+endif
 
 $(GECKO_DIR)/config/buildlist.py: $(DEPENDS_ON_GECKO)

@@ -229,7 +229,7 @@ index 0000000..e16433b
 +
 +#endif /* GONKMEMPRESSURE_H */
 diff --git a/widget/gonk/Makefile.in b/widget/gonk/Makefile.in
-index c45c7b5..e33fef0 100644
+index 30e12bd..02521fe5 100644
 --- a/widget/gonk/Makefile.in
 +++ b/widget/gonk/Makefile.in
 @@ -41,6 +41,7 @@ CPPSRCS	= \
@@ -241,7 +241,7 @@ index c45c7b5..e33fef0 100644
  	InputApplication.cpp \
  	InputDispatcher.cpp \
 diff --git a/widget/gonk/nsAppShell.cpp b/widget/gonk/nsAppShell.cpp
-index bb0e176..4cc488a 100644
+index 2e66604..28ccb4f 100644
 --- a/widget/gonk/nsAppShell.cpp
 +++ b/widget/gonk/nsAppShell.cpp
 @@ -43,6 +43,7 @@
@@ -252,15 +252,15 @@ index bb0e176..4cc488a 100644
  
  #include "android/log.h"
  #include "libui/EventHub.h"
-@@ -493,6 +494,7 @@ nsAppShell::nsAppShell()
+@@ -500,6 +501,7 @@ nsAppShell::~nsAppShell()
+     mReaderThread->requestExit();
+     mEventHub->wake();
  
- nsAppShell::~nsAppShell()
- {
 +    GonkMemPresureDisable();
      status_t result = mReaderThread->requestExitAndWait();
      if (result)
          LOG("Could not stop reader thread - %d", result);
-@@ -514,6 +516,8 @@ nsAppShell::Init()
+@@ -521,6 +523,8 @@ nsAppShell::Init()
      rv = AddFdHandler(signalfds[0], pipeHandler, "");
      NS_ENSURE_SUCCESS(rv, rv);
  
@@ -269,6 +269,3 @@ index bb0e176..4cc488a 100644
      // Delay initializing input devices until the screen has been
      // initialized (and we know the resolution).
      return rv;
--- 
-1.7.8.3
-

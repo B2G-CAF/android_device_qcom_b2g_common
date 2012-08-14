@@ -69,7 +69,7 @@ index 0000000..b212fd6
 +    nsCOMPtr<nsIObserverService> obsServ =
 +      mozilla::services::GetObserverService();
 +    NS_NAMED_LITERAL_STRING(minimize, "heap-minimize");
-+    obsServ->NotifyObservers(nsnull, "memory-pressure", minimize.get());
++    obsServ->NotifyObservers(nullptr, "memory-pressure", minimize.get());
 +    return NS_OK;
 +  }
 +};
@@ -164,7 +164,7 @@ index 0000000..b212fd6
 +  sFd = open("/sys/kernel/mm/lowmemkiller/notify_trigger_active",
 +    O_RDONLY | O_CLOEXEC);
 +  if (sFd > 0) {
-+    if (sMemPressureThread == nsnull) {
++    if (sMemPressureThread == nullptr) {
 +      NS_NewThread(getter_AddRefs(sMemPressureThread),
 +        MemPressurePoller::GetRunnable());
 +    }
@@ -178,8 +178,8 @@ index 0000000..b212fd6
 +    close(sFd);
 +    sFd = 0;
 +  }
-+  sRunnable = nsnull;
-+  sMemPressureThread = nsnull;
++  sRunnable = nullptr;
++  sMemPressureThread = nullptr;
 +}
 +
 +};

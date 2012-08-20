@@ -100,6 +100,18 @@ endef
 
 $(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES), $(eval $(call add-notice-static-dep,$(lib))))
 
+define add-install_gecko_libs-dependency
+$(1): $(LOCAL_XPCOM_MODULE)-install_gecko_libs
+endef
+
+$(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES), $(eval $(call add-install_gecko_libs-dependency,$(TARGET_OUT_INTERMEDIATES)/lib/$(lib).a)))
+
+$(foreach lib,$(LOCAL_XPCOM_SHARED_LIBRARIES), $(eval $(call add-install_gecko_libs-dependency,$(TARGET_OUT_INTERMEDIATES)/lib/$(lib).so)))
+
+$(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES), $(eval $(call add-install_gecko_libs-dependency,$(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_intermediates/$(lib).a)))
+
+$(foreach lib,$(LOCAL_XPCOM_SHARED_LIBRARIES), $(eval $(call add-install_gecko_libs-dependency,$(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates/$(lib).so)))
+
 $(LOCAL_XPCOM_MODULE)-install_gecko_libs: PRIVATE_XPCOM_STATIC_LIBRARIES := $(LOCAL_XPCOM_STATIC_LIBRARIES)
 $(LOCAL_XPCOM_MODULE)-install_gecko_libs: PRIVATE_XPCOM_SHARED_LIBRARIES := $(LOCAL_XPCOM_SHARED_LIBRARIES)
 $(LOCAL_XPCOM_MODULE)-install_gecko_libs: $(DEPENDS_ON_GECKO)
@@ -108,6 +120,7 @@ $(LOCAL_XPCOM_MODULE)-install_gecko_libs: $(DEPENDS_ON_GECKO)
 		cp $(GECKO_OBJDIR)/dist/lib/$(lib).a $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_intermediates && \
 		cp $(GECKO_OBJDIR)/dist/lib/$(lib).a $(TARGET_OUT_INTERMEDIATES)/lib;)
 	$(foreach lib,$(PRIVATE_XPCOM_SHARED_LIBRARIES),\
+		echo Copying $(lib) && \
 		mkdir -p $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates && \
 		cp $(GECKO_OBJDIR)/dist/lib/$(lib).so $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates && \
 		cp $(GECKO_OBJDIR)/dist/lib/$(lib).so $(TARGET_OUT_INTERMEDIATES)/lib;)

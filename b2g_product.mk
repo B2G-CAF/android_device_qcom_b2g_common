@@ -41,3 +41,5 @@ PRODUCT_PACKAGES += \
    OpenSans-SemiboldItalic.ttf \
    OpenSans-Semibold.ttf
 
+PRODUCT_PROPERTY_OVERRIDES += \
+  ro.moz.ril.emergency_by_default=true

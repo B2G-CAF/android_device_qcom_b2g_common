@@ -96,47 +96,43 @@ INSTALL_FLAGS := -m 644
 
 # Make gecko library dependencies work with Android.mk rule
 # Copy them to where Android build system expects to find them
-define add-notice-static-dep
-NOTICE-TARGET-STATIC_LIBRARIES-$(1):
-endef
+$(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES), $(eval NOTICE-TARGET-STATIC_LIBRARIES-$(lib):))
 
-$(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES), $(eval $(call add-notice-static-dep,$(lib))))
 
-define add-install_gecko_libs-dependency
-$(1): $(LOCAL_XPCOM_MODULE)-install_gecko_libs
-endef
+#
+# Copy LOCAL_XPCOM_STATIC_LIBRARIES and LOCAL_XPCOM_SHARED_LIBRARIES from $(GECKO_OBJDIR)/dist
+# to the standard build out locations
+#
 
-$(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES), $(eval $(call add-install_gecko_libs-dependency,$(TARGET_OUT_INTERMEDIATES)/lib/$(lib).a)))
+___LIBS:=$(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES),\
+  $(TARGET_OUT_INTERMEDIATES)/lib/$(lib).a $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_intermediates/$(lib).a)
 
-$(foreach lib,$(LOCAL_XPCOM_SHARED_LIBRARIES), $(eval $(call add-install_gecko_libs-dependency,$(TARGET_OUT_INTERMEDIATES)/lib/$(lib).so)))
+$(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES),\
+  $(eval $(GECKO_OBJDIR)/dist/lib/$(lib).a: $(DEPENDS_ON_GECKO)))
 
-$(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES), $(eval $(call add-install_gecko_libs-dependency,$(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_intermediates/$(lib).a)))
+$(foreach lib,$(___LIBS),\
+  $(eval $(lib): $(GECKO_OBJDIR)/dist/lib/$(notdir $(lib) ; mkdir -p $$(@D) && cp $$< $$@)))
 
-$(foreach lib,$(LOCAL_XPCOM_SHARED_LIBRARIES), $(eval $(call add-install_gecko_libs-dependency,$(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates/$(lib).so)))
-
-$(LOCAL_XPCOM_MODULE)-install_gecko_libs: PRIVATE_XPCOM_STATIC_LIBRARIES := $(LOCAL_XPCOM_STATIC_LIBRARIES)
-$(LOCAL_XPCOM_MODULE)-install_gecko_libs: PRIVATE_XPCOM_SHARED_LIBRARIES := $(LOCAL_XPCOM_SHARED_LIBRARIES)
-$(LOCAL_XPCOM_MODULE)-install_gecko_libs: $(DEPENDS_ON_GECKO)
-	$(foreach lib,$(PRIVATE_XPCOM_STATIC_LIBRARIES),\
-		mkdir -p $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_intermediates && \
-		cp $(GECKO_OBJDIR)/dist/lib/$(lib).a $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_intermediates && \
-		cp $(GECKO_OBJDIR)/dist/lib/$(lib).a $(TARGET_OUT_INTERMEDIATES)/lib;)
-	$(foreach lib,$(PRIVATE_XPCOM_SHARED_LIBRARIES),\
-		echo Copying $(lib) && \
-		mkdir -p $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates && \
-		cp $(GECKO_OBJDIR)/dist/lib/$(lib).so $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates && \
-		cp $(GECKO_OBJDIR)/dist/lib/$(lib).so $(TARGET_OUT_INTERMEDIATES)/lib;)
-
-LOCAL_SHARED_LIBRARIES := $(LOCAL_SHARED_LIBRARIES) $(LOCAL_XPCOM_SHARED_LIBRARIES)
 LOCAL_STATIC_LIBRARIES := $(LOCAL_STATIC_LIBRARIES) $(LOCAL_XPCOM_STATIC_LIBRARIES)
 
+
+___LIBS:=$(foreach lib,$(LOCAL_XPCOM_SHARED_LIBRARIES),\
+  $(TARGET_OUT_INTERMEDIATES)/lib/$(lib).so $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates/$(lib).so)
+
+$(foreach lib,$(LOCAL_XPCOM_SHARED_LIBRARIES),\
+  $(eval $(GECKO_OBJDIR)/dist/lib/$(lib).so: $(DEPENDS_ON_GECKO)))
+
+$(foreach lib,$(___LIBS),\
+  $(eval $(lib): $(GECKO_OBJDIR)/dist/lib/$(notdir $(lib) ; mkdir -p $$(@D) && cp $$< $$@)))
+
+LOCAL_SHARED_LIBRARIES := $(LOCAL_SHARED_LIBRARIES) $(LOCAL_XPCOM_SHARED_LIBRARIES)
+
+
 # Make the module being built by Android.mk depend on the following:
-# 1. The rule to copy gecko libs to Android objdir
-# 2. The .h corresponding to the .idls found in the directory
-# 3. The corresponding .xpt files
-# 4. The overall module .xpt file
-# 5. The export rules to copy idls and headers to $(LIBXUL_DIST)
-LOCAL_ADDITIONAL_DEPENDENCIES := $(LOCAL_ADDITIONAL_DEPENDENCIES) $(LOCAL_XPCOM_MODULE)-install_gecko_libs
+# 1. The .h corresponding to the .idls found in the directory
+# 2. The corresponding .xpt files
+# 3. The overall module .xpt file
+# 4. The export rules to copy idls and headers to $(LIBXUL_DIST)
 
 # Dependencies for IDL files
 ifneq (,$(strip $(LOCAL_XPCOM_IDLS)))

@@ -61,7 +61,9 @@ LOCAL_XPIDL_FLAGS := -I$(LOCAL_XPIDL_PATH) -I$(LIBXUL_DIST)/idl
 # that we depend on
 DEPENDS_ON_GECKO := $(TARGET_OUT)/b2g/distribution
 
+ifeq ($(ONE_SHOT_MAKEFILE),)
 $(TARGET_OUT)/b2g/distribution: $(TARGET_OUT)/gecko
+endif
 
 $(LOCAL_XPCOM_MODULE)-xpidl_prereqs: PRIVATE_XPIDL_OUT := $(LOCAL_XPIDL_OUT)
 

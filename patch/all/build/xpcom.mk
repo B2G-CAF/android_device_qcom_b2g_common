@@ -44,7 +44,7 @@ LOCAL_C_INCLUDES := $(LOCAL_C_INCLUDES) $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko/
 
 # Compiler flags required by many Gecko libraries/sources
 LOCAL_CPPFLAGS := $(LOCAL_CPPFLAGS) -std=c++0x
-LOCAL_CFLAGS := $(LOCAL_CFLAGS) -D__STDC_INT64__ -D__STDC_LIMIT_MACROS
+LOCAL_CFLAGS := $(LOCAL_CFLAGS) -D__STDC_INT64__ -D__STDC_LIMIT_MACROS -Wno-ignored-qualifiers
 
 # Gecko locations
 GECKO_DIR := $(ANDROID_BUILD_TOP)/gecko

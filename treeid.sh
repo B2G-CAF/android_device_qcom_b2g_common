@@ -3,7 +3,7 @@
 # Attempt to identify the Android tree in use.  On success one or more
 # tree identifiers are output to stdout.
 #
-# Copyright (c) 2012, Code Aurora Forum. All rights reserved.
+# Copyright (c) 2012, The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are

@@ -197,6 +197,11 @@ __patch_tree()
 export JAVA_HOME=$(readlink -f device/qcom/b2g_common/faketools/jdk)
 export ANDROID_JAVA_HOME=${JAVA_HOME}
 
+# Use a local Xulrunner SDK copy instead of downloading
+if [[ -d gaia/xulrunner-sdk/.git ]]; then
+   export USE_LOCAL_XULRUNNER_SDK=1
+fi
+
 flash()
 {
    ( cd $(gettop)/device/qcom/b2g_common && ./flash.sh $@ )

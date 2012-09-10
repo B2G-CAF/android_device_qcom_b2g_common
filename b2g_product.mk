@@ -27,7 +27,7 @@
 
 HTTP=android#  Disable chrome HTTP stack in frameworks/base/media/libstagefright/Android.mk
 
-PRODUCT_PACKAGES += rilproxy init.b2g.rc httpd.conf fakeperm mountvol.sh gaia gecko
+PRODUCT_PACKAGES += b2g.sh fakeperm gaia gecko init.b2g.rc rilproxy
 
 PRODUCT_PACKAGES += \
    OpenSans-BoldItalic.ttf \

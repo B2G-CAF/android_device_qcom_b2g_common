@@ -38,3 +38,6 @@ PRODUCT_COPY_FILES += device/qcom/b2g_common/keymaps/generic.idc:system/usr/idc/
 # 7x27a_ffa
 PRODUCT_COPY_FILES += device/qcom/b2g_common/keymaps/generic.idc:system/usr/idc/Atmel_maXTouch_Touchscreen_controller.idc
 
+# Other 7x27a variants use the name 'atmel-touchscreen.idc'
+PRODUCT_COPY_FILES += device/qcom/b2g_common/keymaps/generic.idc:system/usr/idc/atmel-touchscreen.idc
+

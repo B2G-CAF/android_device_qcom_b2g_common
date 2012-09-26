@@ -52,12 +52,13 @@ __abandon_tree()
    fi
 }
 
+B2G_PATCH_DIRS="vendor/qcom/proprietary/b2g_common/patch device/qcom/b2g_common/patch"
+
 __patch_tree()
 {
    (
       cd $(gettop)
       local TREE_ID=${B2G_TREE_ID:-$(device/qcom/b2g_common/treeid.sh)}
-      local PATCH_DIRS="vendor/qcom/proprietary/b2g_common/patch device/qcom/b2g_common/patch"
 
       echo >> Android tree IDs: ${TREE_ID}
       set -e
@@ -66,7 +67,7 @@ __patch_tree()
       local MD5SUM=unknown
       if [[ -f out/lastpatch.md5sum ]]; then
          LASTMD5SUM=$(cat out/lastpatch.md5sum)
-         MD5SUM=$(__tree_md5sum ${PATCH_DIRS})
+         MD5SUM=$(__tree_md5sum ${B2G_PATCH_DIRS})
       fi
       if [[ "$LASTMD5SUM" != "$MD5SUM" ]]; then
          echo "Change detected.  Applying B2G patches".
@@ -127,7 +128,7 @@ __patch_tree()
          # and collate them into an associative array
          # indexed by project
          declare -A PRJ_LIST
-         for DIR in ${PATCH_DIRS} ; do
+         for DIR in ${B2G_PATCH_DIRS} ; do
             for ID in ${TREE_ID} ; do
                local D=${DIR}/${ID}
                [[ -d $D ]] || continue
@@ -179,7 +180,7 @@ __patch_tree()
          echo
          echo B2G patches applied.
          mkdir -p out
-         echo $(__tree_md5sum ${PATCH_DIRS}) > out/lastpatch.md5sum
+         echo $(__tree_md5sum ${B2G_PATCH_DIRS}) > out/lastpatch.md5sum
       else
          echo no changes detected.
       fi

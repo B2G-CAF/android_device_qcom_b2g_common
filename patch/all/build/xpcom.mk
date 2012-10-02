@@ -162,14 +162,13 @@ $(LOCAL_XPIDL_OUT)/$(LOCAL_XPCOM_MODULE).xpt: $(patsubst %.idl,$(LOCAL_XPIDL_OUT
 	$(XPIDL_LINK) $@ $(filter-out %-xpidl_install_prereqs, $^)
 	$(INSTALL) $(INSTALL_FLAGS) $@ $(PRIVATE_XPCOM_INSTALL_DIR)
 
-# Check to see if it is a pure JavaScript component
 LOCAL_JS_SRC_FILES := $(filter %.js,$(LOCAL_SRC_FILES))
 LOCAL_SRC_FILES := $(filter-out %.js,$(LOCAL_SRC_FILES))
 
 # Invoke Android build system to build the shared library
 include $(BUILD_SHARED_LIBRARY)
 
-# We need to install binary only if its not a pure JS component
+# Install the .so only if its not a pure JS component
 ifneq (,$(strip $(LOCAL_SRC_FILES)))
 $(LOCAL_INSTALLED_MODULE): PRIVATE_XPCOM_MODULE := $(LOCAL_XPCOM_MODULE)
 $(LOCAL_INSTALLED_MODULE): PRIVATE_XPCOM_INSTALL_DIR := $(LOCAL_XPCOM_INSTALL_DIR)
@@ -193,11 +192,20 @@ $(LIBXUL_DIST)/include: $(DEPENDS_ON_GECKO)
 $(LOCAL_XPCOM_MODULE)-install_js_srcs:
 
 ifneq (,$(strip $(LOCAL_JS_SRC_FILES)))
+JSMIN := $(BUILD_OUT_EXECUTABLES)/jsmin$(BUILD_EXECUTABLE_SUFFIX)
+
 $(LOCAL_XPCOM_MODULE)-install_js_srcs: PRIVATE_JS_SRC_FILES := $(LOCAL_JS_SRC_FILES)
 $(LOCAL_XPCOM_MODULE)-install_js_srcs: PRIVATE_XPIDL_PATH := $(LOCAL_XPIDL_PATH)
 $(LOCAL_XPCOM_MODULE)-install_js_srcs: PRIVATE_XPCOM_INSTALL_DIR := $(LOCAL_XPCOM_INSTALL_DIR)
-$(LOCAL_XPCOM_MODULE)-install_js_srcs: $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs
-	$(foreach js,$(PRIVATE_JS_SRC_FILES),$(shell cp $(PRIVATE_XPIDL_PATH)/$(js) $(PRIVATE_XPCOM_INSTALL_DIR)))
+ifdef USE_JSMIN
+$(LOCAL_XPCOM_MODULE)-install_js_srcs: PRIVATE_JS_NOTICE := $(LOCAL_JS_NOTICE)
+$(LOCAL_XPCOM_MODULE)-install_js_srcs: $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs $(JSMIN)
+	$(foreach js,$(PRIVATE_JS_SRC_FILES),$(JSMIN) < $(PRIVATE_XPIDL_PATH)/$(js) > $(PRIVATE_XPCOM_INSTALL_DIR)/$(notdir $(js)) '$(PRIVATE_JS_NOTICE)' && ) true
+else
+$(LOCAL_XPCOM_MODULE)-install_js_srcs: $(LOCAL_XPCOM_MODULE)-xpidl_install_prereqs $(ACP)
+	$(foreach js,$(PRIVATE_JS_SRC_FILES),$(ACP) $(PRIVATE_XPIDL_PATH)/$(js) $(PRIVATE_XPCOM_INSTALL_DIR) && ) true
+endif
+
 endif
 
 $(LOCAL_XPCOM_MODULE)-xpcom_install: PRIVATE_XPIDL_PATH := $(LOCAL_XPIDL_PATH)

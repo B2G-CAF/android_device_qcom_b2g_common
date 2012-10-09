@@ -40,7 +40,10 @@ PRODUCT_PACKAGES += \
    OpenSans-Light.ttf \
    OpenSans-Regular.ttf \
    OpenSans-SemiboldItalic.ttf \
-   OpenSans-Semibold.ttf
+   OpenSans-Semibold.ttf \
+   MozTT-Light.ttf \
+   MozTT-Medium.ttf \
+   MozTT-Regular.ttf \
 
 PRODUCT_PROPERTY_OVERRIDES += \
   ro.moz.ril.emergency_by_default=true

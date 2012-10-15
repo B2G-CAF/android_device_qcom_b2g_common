@@ -33,3 +33,7 @@ PRODUCT_PACKAGES += librecovery_updater_qcom
 PRODUCT_PROPERTY_OVERRIDES += \
   ro.moz.ril.emergency_by_default=true \
   org.bluez.device.conn.type=array
+
+ifneq ($(filter user userdebug, $(TARGET_BUILD_VARIANT)),)
+USE_JSMIN = 1
+endif

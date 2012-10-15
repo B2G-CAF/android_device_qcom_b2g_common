@@ -48,4 +48,5 @@ $(AAPT):
 	mkdir -p $(@D)
 	ln -sf $(FAKETOOLS_AAPT) $@
 
-include $(LOCAL_PATH)/updater/Android.mk
+include $(LOCAL_PATH)/updater/Android.mk \
+        $(LOCAL_PATH)/jsmin/Android.mk

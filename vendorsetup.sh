@@ -148,14 +148,6 @@ __patch_tree()
             (
                set -e
                if branch ${PRJ} ; then
-                  if [[ -n $(git status --porcelain) ]]; then
-                     if [[ $1 != "force" ]]; then
-                        echo "ERROR: You have uncommited changes in ${PRJ}"
-                        echo "You may force overwriting these changes"
-                        echo "with |source build/envsetup.sh force|"
-                        exit 1
-                     fi
-                  fi
                   # Ensure the project is clean before applying patches to it
                   git reset --hard HEAD > /dev/null
                   git clean -dfx
@@ -230,7 +222,6 @@ if [[ -z $1 ]]; then
 else
    case $1 in
    clean) __abandon_tree ;;
-   force) __patch_tree force ;;
    np) echo "Skipping patch tree step...";;
    *) [[ -z "$PS1" ]] && __patch_tree || echo Error: Unknown command: $1
    esac

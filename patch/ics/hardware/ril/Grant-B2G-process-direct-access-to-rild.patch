@@ -1,0 +1,16 @@
+diff --git a/libril/ril.cpp b/libril/ril.cpp
+index a36e8a7..3188248 100644
+--- a/libril/ril.cpp
++++ b/libril/ril.cpp
+@@ -61,7 +61,7 @@
+ 
+ namespace android {
+ 
+-#define PHONE_PROCESS "radio"
++#define PHONE_PROCESS "root"
+ 
+ #define ANDROID_WAKE_LOCK_NAME "radio-interface"
+ 
+-- 
+1.7.8.3
+

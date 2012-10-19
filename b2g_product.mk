@@ -27,7 +27,7 @@
 
 HTTP=android#  Disable chrome HTTP stack in frameworks/base/media/libstagefright/Android.mk
 
-PRODUCT_PACKAGES += b2g.sh fakeperm gaia gecko init.b2g.rc rilproxy
+PRODUCT_PACKAGES += b2g.sh fakeperm gaia gecko init.b2g.rc
 PRODUCT_PACKAGES += librecovery
 
 PRODUCT_PACKAGES += \

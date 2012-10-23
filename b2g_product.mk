@@ -41,6 +41,7 @@ PRODUCT_PACKAGES += \
    OpenSans-Regular.ttf \
    OpenSans-SemiboldItalic.ttf \
    OpenSans-Semibold.ttf \
+   MozTT-Bold.ttf \
    MozTT-Light.ttf \
    MozTT-Medium.ttf \
    MozTT-Regular.ttf \

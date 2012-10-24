@@ -27,7 +27,7 @@ diff --git a/target/product/core.mk b/target/product/core.mk
 index abb2d9f..c3c6e9e 100644
 --- a/target/product/core.mk
 +++ b/target/product/core.mk
-@@ -23,45 +23,11 @@ PRODUCT_PROPERTY_OVERRIDES := \
+@@ -23,46 +23,11 @@ PRODUCT_PROPERTY_OVERRIDES := \
      ro.config.alarm_alert=Alarm_Classic.ogg
  
  PRODUCT_PACKAGES := \
@@ -70,9 +70,24 @@ index abb2d9f..c3c6e9e 100644
 -    framework-res \
      hprof-conv \
 -    icu.dat \
-     installd \
+-    installd \
      ip \
      ip-up-vpn \
+     ip6tables \
+diff --git a/target/product/full_base.mk b/target/product/full_base.mk
+index d89af51..e220778 100644
+--- a/target/product/full_base.mk
++++ b/target/product/full_base.mk
+@@ -20,9 +20,6 @@
+ # in inherited configurations.
+ 
+ PRODUCT_PACKAGES := \
+-    drmserver \
+-    libdrmframework \
+-    libdrmframework_jni \
+     libfwdlockengine \
+     OpenWnn \
+     PinyinIME \
 diff --git a/target/product/generic_no_telephony.mk b/target/product/generic_no_telephony.mk
 index 5169f4e..4a4d57e 100644
 --- a/target/product/generic_no_telephony.mk

@@ -25,26 +25,9 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-HTTP=android#  Disable chrome HTTP stack in frameworks/base/media/libstagefright/Android.mk
-
-PRODUCT_PACKAGES += b2g.sh fakeperm gaia gecko init.b2g.rc
-PRODUCT_PACKAGES += librecovery
-
-PRODUCT_PACKAGES += \
-   OpenSans-BoldItalic.ttf \
-   OpenSans-Bold.ttf \
-   OpenSans-ExtraBoldItalic.ttf \
-   OpenSans-ExtraBold.ttf \
-   OpenSans-Italic.ttf \
-   OpenSans-LightItalic.ttf \
-   OpenSans-Light.ttf \
-   OpenSans-Regular.ttf \
-   OpenSans-SemiboldItalic.ttf \
-   OpenSans-Semibold.ttf \
-   MozTT-Bold.ttf \
-   MozTT-Light.ttf \
-   MozTT-Medium.ttf \
-   MozTT-Regular.ttf \
+include gonk-misc/b2g.mk
+TARGET_PROVIDES_INIT_RC :=
+PRODUCT_PACKAGES := $(filter-out fakeperm rilproxy,$(PRODUCT_PACKAGES))
 
 PRODUCT_PROPERTY_OVERRIDES += \
   ro.moz.ril.emergency_by_default=true

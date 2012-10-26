@@ -6,9 +6,9 @@ index e8ec0f1..d298ac6 100644
      "desktop-notification":{},
      "idle":{},
      "network-events":{},
--    "embed-apps":{},
--    "background-sensors":{}
-+    "embed-apps":{}
+     "embed-apps":{},
+-    "background-sensors":{},
+     "permissions":{}
    },
    "locales": {
      "ar": {

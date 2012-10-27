@@ -47,3 +47,5 @@ $(DX):
 $(AAPT):
 	mkdir -p $(@D)
 	ln -sf $(FAKETOOLS_AAPT) $@
+
+include $(LOCAL_PATH)/updater/Android.mk

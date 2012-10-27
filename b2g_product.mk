@@ -28,6 +28,7 @@
 include gonk-misc/b2g.mk
 TARGET_PROVIDES_INIT_RC :=
 PRODUCT_PACKAGES := $(filter-out fakeperm rilproxy,$(PRODUCT_PACKAGES))
+PRODUCT_PACKAGES += librecovery_updater_qcom
 
 PRODUCT_PROPERTY_OVERRIDES += \
   ro.moz.ril.emergency_by_default=true

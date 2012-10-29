@@ -12,10 +12,17 @@ index 2f3622f..8080d70 100755
  WPA := wpa_supplicant.conf
  
 diff --git a/releasetools.py b/releasetools.py
-index 45d0953..f6210b1 100755
+index 45d0953..33372e6 100755
 --- a/releasetools.py
 +++ b/releasetools.py
-@@ -19,22 +18,6 @@
+@@ -1,5 +1,5 @@
+ # Copyright (C) 2009 The Android Open Source Project
+-# Copyright (c) 2011, Code Aurora Forum. All rights reserved.
++# Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
+ #
+ # Licensed under the Apache License, Version 2.0 (the "License");
+ # you may not use this file except in compliance with the License.
+@@ -19,22 +19,6 @@
  import common
  import re
  
@@ -38,7 +45,7 @@ index 45d0953..f6210b1 100755
  def GetRadioFiles(z):
    out = {}
    for info in z.infolist():
-@@ -44,51 +27,93 @@ def GetRadioFiles(z):
+@@ -44,51 +28,93 @@ def GetRadioFiles(z):
    return out
  
  def FullOTA_Assertions(info):

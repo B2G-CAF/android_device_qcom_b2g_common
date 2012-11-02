@@ -37,7 +37,7 @@ if [[ ! ( -f build/envsetup.sh ) ]]; then
 fi
 
 if [[ -f .repo/manifest.xml ]] ; then
-   MANIFEST_ID=$(sed .repo/manifest.xml -e \ '/<default.*/!d ; s/^.*revision="// ; s/".*$// ; s/refs\/tags\///')
+   MANIFEST_ID=$(sed -e \ '/<default.*/!d ; s/^.*revision="// ; s/".*$// ; s/refs\/tags\///' .repo/manifest.xml)
 fi
 
 if [[ -d device/samsung/maguro ]]; then

@@ -29,38 +29,45 @@
 # Environment variables influencing operation:
 #    B2G_TREE_ID - Defines the tree ID, used to determine which patches to
 #        apply.  If unset, |treeid.sh| is run to identify the tree
+#    B2G_PATCH_DIRS_OVERRIDE - List of patch directories to be used instead of
+#        the build defaults.
 #    B2G_USE_REPO - If set, use |repo manifest| to determine when the Android
 #                   tree has changed.  Disabled by default for performance
 #                   reasons.
+#    REPO - Path to repo executable (default: repo)
+
+B2G_TREEID_SH=${B2G_TREEID_SH:-device/qcom/b2g_common/treeid.sh}
+B2G_HASHED_FILES="${B2G_HASHED_FILES:-"device/qcom/b2g_common/vendorsetup.sh ${B2G_TREEID_SH}"}"
+REPO="${REPO:-repo}"
+B2G_PATCH_DIRS=${B2G_PATCH_DIRS_OVERRIDE:-device/qcom/b2g_common/patch}
 
 __tree_md5sum()
 {
    (
-      FILELIST="$(find $@ -type f 2>/dev/null) device/qcom/b2g_common/vendorsetup.sh device/qcom/b2g_common/treeid.sh"
+      FILELIST="$(find $@ -type f 2>/dev/null) ${B2G_HASHED_FILES}"
       if [[ -n "${B2G_USE_REPO}" ]]; then
-         repo manifest -r -o - 2>/dev/null
+         ${REPO} manifest -r -o - 2>/dev/null
       fi
       cat ${FILELIST}
-   ) | md5sum | cut -f1 -d\ 
+   ) | openssl dgst -md5
 }
 
 __abandon_tree()
 {
    rm -f out/lastpatch.md5sum
    if [[ -d .repo ]]; then
-      repo abandon b2g_autogen_ephemeral_branch || true
+      ${REPO} abandon b2g_autogen_ephemeral_branch || true
    fi
 }
 
-B2G_PATCH_DIRS="vendor/qcom/proprietary/b2g_common/patch device/qcom/b2g_common/patch"
 
 __patch_tree()
 {
    (
       cd $(gettop)
-      local TREE_ID=${B2G_TREE_ID:-$(device/qcom/b2g_common/treeid.sh)}
+      local TREE_ID=${B2G_TREE_ID:-$(${B2G_TREEID_SH})}
 
-      echo >> Android tree IDs: ${TREE_ID}
+      echo ">> Android tree IDs: ${TREE_ID}"
       set -e
       echo -n ">> Analyzing workspace for change..."
       local LASTMD5SUM=invalid
@@ -83,7 +90,7 @@ __patch_tree()
             if [[ -d .git ]]; then
                # Try repo first, but if the project is not repo managed then
                # use a raw git branch instead.
-               repo start b2g_autogen_ephemeral_branch .  ||
+               ${REPO} start b2g_autogen_ephemeral_branch .  ||
                  ( git checkout master && \
                    ( git branch -D b2g_autogen_ephemeral_branch || true ) && \
                    git branch b2g_autogen_ephemeral_branch && \

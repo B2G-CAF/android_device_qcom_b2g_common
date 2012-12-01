@@ -1,0 +1,130 @@
+diff --git a/widget/gonk/HwcComposer2D.cpp b/widget/gonk/HwcComposer2D.cpp
+index f13a8b2..3776c48 100644
+--- a/widget/gonk/HwcComposer2D.cpp
++++ b/widget/gonk/HwcComposer2D.cpp
+@@ -49,6 +49,11 @@ enum {
+     HWC_USE_COPYBIT
+ };
+ 
++// HWC layer flags
++enum {
++    HWC_COLOR_FILL = 0x8 // RGBA color-fill using copybit
++};
++
+ namespace mozilla {
+ 
+ static StaticRefPtr<HwcComposer2D> sInstance;
+@@ -233,6 +238,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+     // GetEffective*() coordinates are relative to the framebuffer.
+ 
+     const bool TESTING = true;
++    bool fillColor = false;
+ 
+     const nsIntRegion& visibleRegion = aLayer->GetEffectiveVisibleRegion();
+     if (visibleRegion.IsEmpty()) {
+@@ -279,8 +285,11 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+ 
+     if (!state.mSurface ||
+         state.mSurface->type() != SurfaceDescriptor::TSurfaceDescriptorGralloc) {
+-        LOGD("Layer doesn't have a gralloc buffer");
+-        return false;
++        if (!aLayer->AsColorLayer()) {
++            LOGD("Layer doesn't have a gralloc buffer");
++            return false;
++        }
++        fillColor = true;
+     }
+     if (state.BufferRotated()) {
+         LOGD("Layer has a rotated buffer");
+@@ -304,12 +313,18 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+         }
+     }
+ 
+-    sp<GraphicBuffer> buffer = GrallocBufferActor::GetFrom(*state.mSurface);
++    sp<GraphicBuffer> buffer = fillColor ? NULL : GrallocBufferActor::GetFrom(*state.mSurface);
+ 
+     nsIntRect visibleRect = visibleRegion.GetBounds();
+ 
+-    nsIntRect bufferRect = nsIntRect(0, 0, int(buffer->getWidth()),
+-        int(buffer->getHeight()));
++    nsIntRect bufferRect;
++    if (fillColor) {
++        bufferRect = nsIntRect(0, 0, visibleRect.width,
++            visibleRect.height);
++    } else {
++        bufferRect = nsIntRect(0, 0, int(buffer->getWidth()),
++            int(buffer->getHeight()));
++    }
+ 
+     hwc_layer_t& hwcLayer = mList->hwLayers[current];
+ 
+@@ -319,43 +334,42 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+         return true;
+     }
+ 
+-    buffer_handle_t handle = buffer->getNativeBuffer()->handle;
++    buffer_handle_t handle = fillColor ? NULL : buffer->getNativeBuffer()->handle;
+     hwcLayer.handle = handle;
+ 
+-    hwcLayer.blending = HWC_BLENDING_NONE;
+     hwcLayer.flags = 0;
+     hwcLayer.hints = 0;
+-
+-
++    hwcLayer.blending = HWC_BLENDING_NONE;
+     hwcLayer.compositionType = HWC_USE_COPYBIT;
+ 
+-    if (transform.xx == 0) {
+-        if (transform.xy < 0) {
+-            hwcLayer.transform = HWC_TRANSFORM_ROT_90;
+-            LOGD("Layer buffer rotated 90 degrees");
+-        }
+-        else {
+-            hwcLayer.transform = HWC_TRANSFORM_ROT_270;
+-            LOGD("Layer buffer rotated 270 degrees");
++    if (!fillColor) {
++        if (transform.xx == 0) {
++            if (transform.xy < 0) {
++                hwcLayer.transform = HWC_TRANSFORM_ROT_90;
++                LOGD("Layer buffer rotated 90 degrees");
++            } else {
++                hwcLayer.transform = HWC_TRANSFORM_ROT_270;
++                LOGD("Layer buffer rotated 270 degrees");
++            }
++        } else if (transform.xx < 0) {
++            hwcLayer.transform = HWC_TRANSFORM_ROT_180;
++            LOGD("Layer buffer rotated 180 degrees");
++        } else {
++            hwcLayer.transform = 0;
+         }
+-    }
+-    else if (transform.xx < 0) {
+-        hwcLayer.transform = HWC_TRANSFORM_ROT_180;
+-        LOGD("Layer buffer rotated 180 degrees");
+-    }
+-    else {
+-        hwcLayer.transform = 0;
+-    }
+-
+-    hwcLayer.transform |= state.YFlipped() ? HWC_TRANSFORM_FLIP_V : 0;
+ 
+-    hwc_region_t region;
+-    region.numRects = 1;
+-    region.rects = &(hwcLayer.displayFrame);
+-    hwcLayer.visibleRegionScreen = region;
++        hwcLayer.transform |= state.YFlipped() ? HWC_TRANSFORM_FLIP_V : 0;
++        hwc_region_t region;
++        region.numRects = 1;
++        region.rects = &(hwcLayer.displayFrame);
++        hwcLayer.visibleRegionScreen = region;
++    } else {
++        hwcLayer.flags |= HWC_COLOR_FILL;
++        ColorLayer* colorLayer = static_cast<ColorLayer*>(layerGL->GetLayer());
++        hwcLayer.transform = colorLayer->GetColor().Packed();
++    }
+ 
+     mList->numHwLayers++;
+-
+     return true;
+ }
+ 

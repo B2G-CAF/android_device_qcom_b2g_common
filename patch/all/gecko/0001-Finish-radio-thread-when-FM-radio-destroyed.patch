@@ -1,0 +1,26 @@
+From d0ef9855502df3e560741423a424cbc250227f8b Mon Sep 17 00:00:00 2001
+From: Greg Grisco <ggrisco@codeaurora.org>
+Date: Mon, 26 Nov 2012 14:12:41 -0800
+Subject: [PATCH] Finish radio thread when FM radio destroyed
+
+Change-Id: I160e8b22e24e7fdf418bd47fbd6ad5cc5b8b1b0b
+---
+ hal/gonk/GonkFMRadio.cpp |    2 ++
+ 1 files changed, 2 insertions(+), 0 deletions(-)
+
+diff --git a/hal/gonk/GonkFMRadio.cpp b/hal/gonk/GonkFMRadio.cpp
+index 2da5662..55fe351 100644
+--- a/hal/gonk/GonkFMRadio.cpp
++++ b/hal/gonk/GonkFMRadio.cpp
+@@ -197,6 +197,8 @@ runTavaruaRadio(void *)
+       case TAVARUA_EVT_RADIO_READY:
+         NS_DispatchToMainThread(new RadioUpdate(hal::FM_RADIO_OPERATION_ENABLE,                                                 hal::FM_RADIO_OPERATION_STATUS_SUCCESS));
+         break;
++      case TAVARUA_EVT_RADIO_DISABLED:
++         break;
+       case TAVARUA_EVT_SEEK_COMPLETE:
+         NS_DispatchToMainThread(new RadioUpdate(hal::FM_RADIO_OPERATION_SEEK,
+                                                 hal::FM_RADIO_OPERATION_STATUS_SUCCESS));
+-- 
+1.7.8.3
+

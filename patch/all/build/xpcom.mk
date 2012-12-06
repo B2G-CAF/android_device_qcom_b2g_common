@@ -35,7 +35,10 @@ LOCAL_XPIDL_OUT := $(LOCAL_XPCOM_MODULE_OBJDIR)/xpidl_obj
 # Add Gecko as a dependency of this module.
 LOCAL_REQUIRED_MODULES := $(LOCAL_REQUIRED_MODULES) gecko
 # Add Gecko headers to include path
-LOCAL_C_INCLUDES := $(LOCAL_C_INCLUDES) $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko/dist/include $(LOCAL_XPIDL_OUT)
+LOCAL_C_INCLUDES := $(LOCAL_C_INCLUDES) \
+  $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko/dist/include \
+  $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko/dist/include/nspr \
+  $(LOCAL_XPIDL_OUT)
 
 # Compiler flags required by many Gecko libraries/sources
 LOCAL_CPPFLAGS := $(LOCAL_CPPFLAGS) -std=c++0x

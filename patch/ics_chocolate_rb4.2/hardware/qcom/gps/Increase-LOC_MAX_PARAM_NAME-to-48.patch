@@ -1,0 +1,16 @@
+diff --git a/utils/loc_cfg.h b/utils/loc_cfg.h
+index 0cd6203..db035f4 100644
+--- a/utils/loc_cfg.h
++++ b/utils/loc_cfg.h
+@@ -32,7 +32,7 @@
+ 
+ #include <stdint.h>
+ 
+-#define LOC_MAX_PARAM_NAME                 36
++#define LOC_MAX_PARAM_NAME                 48
+ #define LOC_MAX_PARAM_STRING               80
+ #define LOC_MAX_PARAM_LINE                 80
+ 
+-- 
+1.7.8.3
+

@@ -1,0 +1,13 @@
+diff --git a/apps/camera/js/camera.js b/apps/camera/js/camera.js
+index 641d8ba..00d0cb6 100644
+--- a/apps/camera/js/camera.js
++++ b/apps/camera/js/camera.js
+@@ -334,8 +334,6 @@ var Camera = {
+             navigator.mozL10n.get(id + '-text'));
+     }).bind(this);
+ 
+-    this.disableButtons();
+-
+     var startRecording = (function startRecording(freeBytes) {
+       if (freeBytes < this.RECORD_SPACE_MIN) {
+         handleError('nospace');

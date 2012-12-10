@@ -44,6 +44,11 @@ LOCAL_C_INCLUDES := $(LOCAL_C_INCLUDES) \
 LOCAL_CPPFLAGS := $(LOCAL_CPPFLAGS) -std=c++0x
 LOCAL_CFLAGS := $(LOCAL_CFLAGS) -D__STDC_INT64__ -D__STDC_LIMIT_MACROS -Wno-ignored-qualifiers
 
+# Enable DEBUG for -eng builds to activate runtime assertions
+ifneq ($(filter eng, $(TARGET_BUILD_VARIANT)),)
+LOCAL_CFLAGS += -DDEBUG
+endif
+
 # Gecko locations
 GECKO_DIR := $(ANDROID_BUILD_TOP)/gecko
 GECKO_OBJDIR := $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko

@@ -1,0 +1,12 @@
+diff --git a/init.target.rc b/init.target.rc
+index d174c6f..9ee2bf3 100644
+--- a/init.target.rc
++++ b/init.target.rc
+@@ -48,3 +48,7 @@ on property:sys.radio.shutdown=true
+    user root
+    group root
+ 
++service qosmgrd /system/bin/qosmgr /system/etc/qosmgr_rules.xml
++    user system
++    group system
++    disabled

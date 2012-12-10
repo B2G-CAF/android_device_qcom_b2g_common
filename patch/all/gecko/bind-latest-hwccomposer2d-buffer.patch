@@ -1,0 +1,34 @@
+diff --git a/gfx/layers/opengl/ImageLayerOGL.cpp b/gfx/layers/opengl/ImageLayerOGL.cpp
+index 41f1354..026a629 100644
+--- a/gfx/layers/opengl/ImageLayerOGL.cpp
++++ b/gfx/layers/opengl/ImageLayerOGL.cpp
+@@ -824,6 +824,8 @@ ShadowImageLayerOGL::GetRenderState()
+     return LayerRenderState();
+   }
+ 
++  mOGLManager->MakeCurrent();
++
+   // Update the associated compositor ID in case Composer2D succeeds,
+   // because we won't enter RenderLayer() if so ...
+   ImageContainerParent::SetCompositorIDForImage(
+@@ -834,6 +836,20 @@ ShadowImageLayerOGL::GetRenderState()
+ 
+   SharedImage* img = ImageContainerParent::GetSharedImage(mImageContainerID);
+   if (img && img->type() == SharedImage::TSurfaceDescriptor) {
++    uint32_t imgVersion = ImageContainerParent::GetSharedImageVersion(mImageContainerID);
++    if (imgVersion != mImageVersion && img->get_SurfaceDescriptor().type() == SurfaceDescriptor::TSurfaceDescriptorGralloc) {
++        const SurfaceDescriptorGralloc& desc = img->get_SurfaceDescriptor().get_SurfaceDescriptorGralloc();
++        sp<GraphicBuffer> graphicBuffer = GrallocBufferActor::GetFrom(desc);
++        mSize = gfxIntSize(graphicBuffer->getWidth(), graphicBuffer->getHeight());
++        if (!mExternalBufferTexture.IsAllocated()) {
++          mExternalBufferTexture.Allocate(gl());
++        }
++        gl()->MakeCurrent();
++        gl()->fActiveTexture(LOCAL_GL_TEXTURE0);
++        gl()->BindExternalBuffer(mExternalBufferTexture.GetTextureID(), graphicBuffer->getNativeBuffer());
++        gl()->fBindTexture(LOCAL_GL_TEXTURE_EXTERNAL, mExternalBufferTexture.GetTextureID());
++        mImageVersion = imgVersion;
++    }
+     return LayerRenderState(&img->get_SurfaceDescriptor());
+   }
+   return LayerRenderState();

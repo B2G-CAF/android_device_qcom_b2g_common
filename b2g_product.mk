@@ -33,7 +33,9 @@ PRODUCT_PACKAGES += librecovery_updater_qcom
 
 PRODUCT_PROPERTY_OVERRIDES += \
   ro.moz.ril.emergency_by_default=true \
-  org.bluez.device.conn.type=array
+  org.bluez.device.conn.type=array \
+  ro.moz.omx.hw.max_width=640 \
+  ro.moz.omx.hw.max_height=360
 
 ifneq ($(filter user userdebug, $(TARGET_BUILD_VARIANT)),)
 USE_JSMIN = 1

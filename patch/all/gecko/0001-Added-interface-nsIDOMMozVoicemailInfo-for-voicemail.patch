@@ -1,0 +1,126 @@
+From a9f3cb262247e45816296fc88a524e0f5c20f879 Mon Sep 17 00:00:00 2001
+From: Nivedita Sarkar <nsarkar@codeaurora.org>
+Date: Mon, 17 Dec 2012 15:19:10 -0800
+Subject: [PATCH] Added interface nsIDOMMozVoicemailInfo for voicemail info in
+ rilcontext.
+
+Change-Id: Id55deb7497debe317d4c042689eabf8c36ad7779
+
+ Author:    Nivedita Sarkar <nsarkar@codeaurora.org>
+---
+ dom/network/interfaces/nsIDOMMobileConnection.idl    | 20 ++++++++++++++++++++
+ .../interfaces/nsIMobileConnectionProvider.idl       |  2 ++
+ dom/network/src/MobileConnection.cpp                 | 10 ++++++++++
+ dom/system/gonk/nsIRadioInterfaceLayer.idl           |  3 +++
+ 4 files changed, 35 insertions(+)
+
+diff --git a/dom/network/interfaces/nsIDOMMobileConnection.idl b/dom/network/interfaces/nsIDOMMobileConnection.idl
+index e70fd88..e2d1822 100644
+--- a/dom/network/interfaces/nsIDOMMobileConnection.idl
++++ b/dom/network/interfaces/nsIDOMMobileConnection.idl
+@@ -12,6 +12,7 @@ interface nsIDOMMozMobileNetworkInfo;
+ interface nsIDOMMozMobileCellInfo;
+ interface nsIDOMMozIccManager;
+ interface nsIDOMMozMobileCFInfo;
++interface nsIDOMMozVoicemailInfo;
+
+ [scriptable, builtinclass, uuid(cc4947eb-aa39-4c25-878d-618dc4d4d2bc)]
+ interface nsIDOMMozMobileConnection : nsIDOMEventTarget
+@@ -50,6 +51,11 @@ interface nsIDOMMozMobileConnection : nsIDOMEventTarget
+   readonly attribute nsIDOMMozMobileConnectionInfo data;
+
+   /**
++   * Information about the data connection.
++   */
++  readonly attribute nsIDOMMozVoicemailInfo voicemail;
++
++  /**
+    * The selection mode of the voice and data networks.
+    *
+    * Possible values: null (unknown), 'automatic', 'manual'
+@@ -416,6 +422,20 @@ interface nsIDOMMozMobileCellInfo: nsISupports
+   readonly attribute unsigned long gsmCellId;
+ };
+
++[scriptable, uuid(b085acf1-6d5b-4471-9c44-989e9a09ef1d)]
++interface nsIDOMMozVoicemailInfo : nsISupports
++{
++   /**
++   * Voicemail number.
++   */
++   readonly attribute DOMString number;
++
++   /**
++   * Voicemail display name.
++   */
++   readonly attribute DOMString displayName;
++};
++
+ [scriptable, uuid(1fb27dc0-427e-11e2-a25f-0800200c9a66)]
+ interface nsIDOMMozMobileICCInfo : nsISupports
+ {
+diff --git a/dom/network/interfaces/nsIMobileConnectionProvider.idl b/dom/network/interfaces/nsIMobileConnectionProvider.idl
+index 827d7fb..e4e182e 100644
+--- a/dom/network/interfaces/nsIMobileConnectionProvider.idl
++++ b/dom/network/interfaces/nsIMobileConnectionProvider.idl
+@@ -10,6 +10,7 @@ interface nsIDOMMozMobileNetworkInfo;
+ interface nsIDOMMozMobileCFInfo;
+ interface nsIDOMDOMRequest;
+ interface nsIDOMWindow;
++interface nsIDOMMozVoicemailInfo;
+
+ /**
+  * XPCOM component (in the content process) that provides the mobile
+@@ -32,6 +33,7 @@ interface nsIMobileConnectionProvider : nsISupports
+   readonly attribute nsIDOMMozMobileICCInfo iccInfo;
+   readonly attribute nsIDOMMozMobileConnectionInfo voiceConnectionInfo;
+   readonly attribute nsIDOMMozMobileConnectionInfo dataConnectionInfo;
++  readonly attribute nsIDOMMozVoicemailInfo voicemailInfo;
+   readonly attribute DOMString networkSelectionMode;
+
+   nsIDOMDOMRequest getNetworks(in nsIDOMWindow window);
+diff --git a/dom/network/src/MobileConnection.cpp b/dom/network/src/MobileConnection.cpp
+index d7905c6..66987b7 100644
+--- a/dom/network/src/MobileConnection.cpp
++++ b/dom/network/src/MobileConnection.cpp
+@@ -288,6 +288,16 @@ MobileConnection::GetData(nsIDOMMozMobileConnectionInfo** data)
+ }
+
+ NS_IMETHODIMP
++MobileConnection::GetVoicemail(nsIDOMMozVoicemailInfo** voicemail)
++{
++  if (!mProvider) {
++    *voicemail = nullptr;
++    return NS_OK;
++  }
++  return mProvider->GetVoicemailInfo(voicemail);
++}
++
++NS_IMETHODIMP
+ MobileConnection::GetNetworkSelectionMode(nsAString& networkSelectionMode)
+ {
+   if (!mProvider) {
+diff --git a/dom/system/gonk/nsIRadioInterfaceLayer.idl b/dom/system/gonk/nsIRadioInterfaceLayer.idl
+index 16eeac5..bb480d8 100644
+--- a/dom/system/gonk/nsIRadioInterfaceLayer.idl
++++ b/dom/system/gonk/nsIRadioInterfaceLayer.idl
+@@ -11,6 +11,7 @@ interface nsIDOMWindow;
+ interface nsIDOMMozVoicemailStatus;
+ interface nsISmsRequest;
+ interface nsIDOMMozCellBroadcastMessage;
++interface nsIDOMMozVoicemailInfo;
+
+ [scriptable, uuid(0faabc35-644d-4ed5-b109-425280ff1cdf)]
+ interface nsIRILTelephonyCallback : nsISupports
+@@ -275,6 +276,8 @@ interface nsIRilContext : nsISupports
+   readonly attribute nsIDOMMozMobileConnectionInfo voice;
+
+   readonly attribute nsIDOMMozMobileConnectionInfo data;
++
++  readonly attribute nsIDOMMozVoicemailInfo voicemail;
+ };
+
+ [scriptable, uuid(a90fef2c-44aa-4f2b-a0ee-a590e9dd345e)]
+--
+1.7.11.1
+

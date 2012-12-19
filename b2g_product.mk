@@ -32,6 +32,7 @@ PRODUCT_PACKAGES := $(filter-out fakeperm rilproxy,$(PRODUCT_PACKAGES))
 PRODUCT_PACKAGES += librecovery_updater_qcom
 
 PRODUCT_PROPERTY_OVERRIDES += \
+  ro.display.colorfill=1 \
   ro.moz.ril.emergency_by_default=true \
   org.bluez.device.conn.type=array \
   ro.moz.omx.hw.max_width=640 \

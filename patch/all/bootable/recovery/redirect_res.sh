@@ -1,3 +1,3 @@
 git_rm -r res/
-cp -ra ../../librecovery/res .
+cp -a ../../librecovery/res .
 git_add res/

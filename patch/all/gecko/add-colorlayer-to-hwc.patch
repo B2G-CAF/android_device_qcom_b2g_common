@@ -1,20 +1,42 @@
 diff --git a/widget/gonk/HwcComposer2D.cpp b/widget/gonk/HwcComposer2D.cpp
-index f13a8b2..3776c48 100644
+index f13a8b2..198c452 100644
 --- a/widget/gonk/HwcComposer2D.cpp
 +++ b/widget/gonk/HwcComposer2D.cpp
-@@ -49,6 +49,11 @@ enum {
+@@ -27,6 +27,7 @@
+ #include "nsIScreenManager.h"
+ #include "nsMathUtils.h"
+ #include "nsServiceManagerUtils.h"
++#include "cutils/properties.h"
+ 
+ #define LOG_TAG "HWComposer"
+ 
+@@ -49,6 +50,14 @@ enum {
      HWC_USE_COPYBIT
  };
  
 +// HWC layer flags
 +enum {
-+    HWC_COLOR_FILL = 0x8 // RGBA color-fill using copybit
++    // Draw a solid color rectangle
++    // The color should be set on the transform member of the hwc_layer_t struct
++    // The expected format is a 32 bit ABGR with 8 bits per component
++    HWC_COLOR_FILL = 0x8
 +};
 +
  namespace mozilla {
  
  static StaticRefPtr<HwcComposer2D> sInstance;
-@@ -233,6 +238,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+@@ -79,6 +88,10 @@ HwcComposer2D::Init(hwc_display_t dpy, hwc_surface_t sur)
+     mScreenWidth  = screenSize.width;
+     mScreenHeight = screenSize.height;
+ 
++    char propValue[PROPERTY_VALUE_MAX];
++    property_get("ro.display.colorfill", propValue, "0");
++    mColorFill = (atoi(propValue) == 1) ? true : false;
++
+     mDpy = dpy;
+     mSur = sur;
+ 
+@@ -233,6 +246,7 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
      // GetEffective*() coordinates are relative to the framebuffer.
  
      const bool TESTING = true;
@@ -22,26 +44,27 @@ index f13a8b2..3776c48 100644
  
      const nsIntRegion& visibleRegion = aLayer->GetEffectiveVisibleRegion();
      if (visibleRegion.IsEmpty()) {
-@@ -279,8 +285,11 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+@@ -279,8 +293,12 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
  
      if (!state.mSurface ||
          state.mSurface->type() != SurfaceDescriptor::TSurfaceDescriptorGralloc) {
 -        LOGD("Layer doesn't have a gralloc buffer");
 -        return false;
-+        if (!aLayer->AsColorLayer()) {
++        if (aLayer->AsColorLayer() && mColorFill) {
++            fillColor = true;
++        } else {
 +            LOGD("Layer doesn't have a gralloc buffer");
 +            return false;
 +        }
-+        fillColor = true;
      }
      if (state.BufferRotated()) {
          LOGD("Layer has a rotated buffer");
-@@ -304,12 +313,18 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+@@ -304,12 +322,18 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
          }
      }
  
 -    sp<GraphicBuffer> buffer = GrallocBufferActor::GetFrom(*state.mSurface);
-+    sp<GraphicBuffer> buffer = fillColor ? NULL : GrallocBufferActor::GetFrom(*state.mSurface);
++    sp<GraphicBuffer> buffer = fillColor ? nullptr : GrallocBufferActor::GetFrom(*state.mSurface);
  
      nsIntRect visibleRect = visibleRegion.GetBounds();
  
@@ -58,12 +81,12 @@ index f13a8b2..3776c48 100644
  
      hwc_layer_t& hwcLayer = mList->hwLayers[current];
  
-@@ -319,43 +334,42 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+@@ -319,43 +343,42 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
          return true;
      }
  
 -    buffer_handle_t handle = buffer->getNativeBuffer()->handle;
-+    buffer_handle_t handle = fillColor ? NULL : buffer->getNativeBuffer()->handle;
++    buffer_handle_t handle = fillColor ? nullptr : buffer->getNativeBuffer()->handle;
      hwcLayer.handle = handle;
  
 -    hwcLayer.blending = HWC_BLENDING_NONE;
@@ -128,3 +151,15 @@ index f13a8b2..3776c48 100644
      return true;
  }
  
+diff --git a/widget/gonk/HwcComposer2D.h b/widget/gonk/HwcComposer2D.h
+index d192f9a..04b2edc 100644
+--- a/widget/gonk/HwcComposer2D.h
++++ b/widget/gonk/HwcComposer2D.h
+@@ -55,6 +55,7 @@ private:
+     nsCOMPtr<nsIScreen>     mScreen;
+     int                     mScreenWidth, mScreenHeight;
+     int                     mMaxLayerCount;
++    bool                    mColorFill;
+ };
+ 
+ } // namespace mozilla

@@ -134,7 +134,8 @@ __patch_tree()
          # Find all of the patches for TREE_ID
          # and collate them into an associative array
          # indexed by project
-         declare -A PRJ_LIST
+         declare -a PRJ_LIST
+         declare -a PATCH_LIST
          for DIR in ${B2G_PATCH_DIRS} ; do
             for ID in ${TREE_ID} ; do
                local D=${DIR}/${ID}
@@ -142,14 +143,26 @@ __patch_tree()
                PATCHES=$(find $D -type f | sort -fs)
                for P in ${PATCHES}; do
                   PRJ=$(dirname ${P#${DIR}/${ID}/})
-                  PRJ_LIST[$PRJ]="${PRJ_LIST[$PRJ]} $P"
+                  PATCH_ADDED=0
+                  for (( I=0 ; I<${#PRJ_LIST[@]} ; I++ )) ; do
+                     if [[ ${PRJ_LIST[$I]} == ${PRJ} ]]; then
+                        PATCH_ADDED=1
+                        PATCH_LIST[$I]="${PATCH_LIST[$I]} $P"
+                        break
+                     fi
+                  done
+                  if [[ ${PATCH_ADDED} -eq 0 ]]; then
+                     PRJ_LIST=("${PRJ_LIST[@]}" "${PRJ}")
+                     PATCH_LIST=("${PATCH_LIST[@]}" "$P")
+                  fi
                done
             done
          done
 
          # Run through each project and apply patches
          ROOT_DIR=${PWD}
-         for PRJ in ${!PRJ_LIST[*]} ; do
+         for (( I=0 ; I<${#PRJ_LIST[@]} ; I++ )) ; do
+            local PRJ=${PRJ_LIST[$I]}
             local FAILED_PRJ=${PRJ}
             set +e
             (
@@ -167,11 +180,20 @@ __patch_tree()
                   git reset --hard HEAD > /dev/null
                   git clean -dfx
 
-                  declare -A PATCHNAME
-                  for P in ${PRJ_LIST[${PRJ}]} ; do
+                  declare -a PATCHNAME
+                  for P in ${PATCH_LIST[$I]} ; do
                      # Skip patches that have already been applied by an earlier ID
-                     if [[ -n "${PATCHNAME[$(basename $P)]}" ]]; then continue; fi
-                     PATCHNAME[$(basename $P)]=1
+                     local PATCH_APPLIED=0
+                     for APPLIED in ${PATCHNAME} ; do
+                        if [[ ${APPLIED} == $(basename $P) ]]; then
+                           PATCH_APPLIED=1
+                        fi
+                     done
+                     if [[ ${PATCH_APPLIED} -eq 1 ]]; then
+                        continue
+                     else
+                        PATCHNAME=("${PATCHNAME[@]}" "$(basename $P)")
+                     fi
 
                      echo "  ${P}"
                      case $P in
@@ -210,7 +232,7 @@ __patch_tree()
 }
 
 # Stub out all java compilation.
-export JAVA_HOME=$(readlink -f device/qcom/b2g_common/faketools/jdk)
+export JAVA_HOME=$(gettop)/device/qcom/b2g_common/faketools/jdk
 export ANDROID_JAVA_HOME=${JAVA_HOME}
 
 # Use a local Xulrunner SDK copy instead of downloading

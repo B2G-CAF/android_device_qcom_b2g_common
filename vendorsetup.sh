@@ -192,7 +192,7 @@ __patch_tree()
                      if [[ ${PATCH_APPLIED} -eq 1 ]]; then
                         continue
                      else
-                        PATCHNAME=("${PATCHNAME[@]}" "$(basename $P)")
+                        PATCHNAME="${PATCHNAME} $(basename $P)"
                      fi
 
                      echo "  ${P}"

@@ -1,0 +1,15 @@
+diff --git a/QualcommCameraHardware.cpp b/QualcommCameraHardware.cpp
+index 8ab0bdd..f2c63e3 100644
+--- a/QualcommCameraHardware.cpp
++++ b/QualcommCameraHardware.cpp
+@@ -1421,6 +1421,7 @@ QualcommCameraHardware::QualcommCameraHardware()
+       mExpBracketMode(false),
+       mZslEnable(false),
+       mStoreMetaDataInFrame(0),
++      metadata_memory(),
+       mRecordingState(0)
+ {
+     LOGI("QualcommCameraHardware constructor E");
+-- 
+1.7.8.3
+

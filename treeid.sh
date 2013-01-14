@@ -3,7 +3,7 @@
 # Attempt to identify the Android tree in use.  On success one or more
 # tree identifiers are output to stdout.
 #
-# Copyright (c) 2012, The Linux Foundation. All rights reserved.
+# Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -36,16 +36,20 @@ if [[ ! ( -f build/envsetup.sh ) ]]; then
    exit 1
 fi
 
+TREEID=all
 if [[ -f .repo/manifest.xml ]] ; then
-   MANIFEST_ID=$(sed -e \ '/<default.*/!d ; s/^.*revision="// ; s/".*$// ; s/refs\/tags\///' .repo/manifest.xml)
+   # Tokenize <default revision="x_y_z"/> by '_'
+   TOKENS=$(sed -e \ '/<default.*/!d ; s/^.*revision="// ; s/".*$// ; s/refs\/tags\/// ; s/_/ /g;' .repo/manifest.xml)
+
+   MANIFEST_ID=
+   for T in $TOKENS; do
+      if [ -z $MANIFEST_ID ]; then
+        MANIFEST_ID=$T
+      else
+        MANIFEST_ID=${MANIFEST_ID}_$T
+      fi
+      TREEID="$MANIFEST_ID $TREEID"
+   done
 fi
 
-if [[ -d device/samsung/maguro ]]; then
-   # Android ICS tree
-   echo ${MANIFEST_ID} ics all
-   exit
-fi
-
-# Android GB tree
-echo ${MANIFEST_ID} gb all
-exit
+echo $TREEID

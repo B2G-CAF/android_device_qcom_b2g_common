@@ -36,7 +36,7 @@ if [[ ! ( -f build/envsetup.sh ) ]]; then
    exit 1
 fi
 
-TREEID=all
+TREEID=
 if [[ -f .repo/manifest.xml ]] ; then
    # Tokenize <default revision="x_y_z"/> by '_'
    TOKENS=$(sed -e \ '/<default.*/!d ; s/^.*revision="// ; s/".*$// ; s/refs\/tags\/// ; s/.*\/// ; s/_/ /g;' .repo/manifest.xml)
@@ -52,4 +52,9 @@ if [[ -f .repo/manifest.xml ]] ; then
    done
 fi
 
-echo $TREEID
+if [ -z "$TREEID" ]; then
+  TREEID="ics_strawberry ics"
+  echo $0: Warning: Unable to classify tree.  Using default: $TREEID
+fi
+
+echo $TREEID all

@@ -1,0 +1,119 @@
+diff --git a/widget/gonk/HwcComposer2D.cpp b/widget/gonk/HwcComposer2D.cpp
+index 4492f5d..f1ebbfb 100644
+--- a/widget/gonk/HwcComposer2D.cpp
++++ b/widget/gonk/HwcComposer2D.cpp
+@@ -194,6 +194,54 @@ PrepareLayerRects(nsIntRect aVisible, const gfxMatrix& aTransform,
+ }
+ 
+ /**
++ * Prepares hwc layer visible region required for hwc composition
++ *
++ * @param aVisible Input. Layer's unclipped visible region
++ *        The origin is the top-left corner of the layer
++ * @param aTransform Input. Layer's transformation matrix
++ *        It transforms from layer space to screen space
++ * @param aClip Input. A clipping rectangle.
++ *        The origin is the top-left corner of the screen
++ * @param aBufferRect Input. The layer's buffer bounds
++ *        The origin is the top-left corner of the layer
++ * @param aVisibleRegionScreen Output. Visible region in screen space.
++ *        The origin is the top-left corner of the screen
++ * @return true if the layer should be rendered.
++ *         false if the layer can be skipped
++ */
++static bool
++PrepareVisibleRegion(const nsIntRegion& aVisible, const gfxMatrix& aTransform,
++                  nsIntRect aClip, nsIntRect aBufferRect,
++                  std::vector<hwc_rect_t>* aVisibleRegionScreen) {
++
++    nsIntRegionRectIterator iter(aVisible);
++    bool isVisible = false;
++    while (const nsIntRect* visibleRect = iter.Next()) {
++        hwc_rect_t visibleRectScreen;
++
++        gfxRect gfxVisibleRect(*visibleRect);
++        gfxVisibleRect.IntersectRect(gfxVisibleRect, aBufferRect);
++        gfxRect gfxVisibleRectScreen = aTransform.TransformBounds(gfxVisibleRect);
++        gfxVisibleRectScreen.IntersectRect(gfxVisibleRectScreen, aClip);
++        gfxVisibleRectScreen.RoundOut();
++        if(gfxVisibleRectScreen.IsEmpty()) {
++            continue;
++        }
++        visibleRectScreen.left = gfxVisibleRectScreen.x;
++        visibleRectScreen.top  = gfxVisibleRectScreen.y;
++        visibleRectScreen.right  = gfxVisibleRectScreen.x + gfxVisibleRectScreen.width;
++        visibleRectScreen.bottom = gfxVisibleRectScreen.y + gfxVisibleRectScreen.height;
++        aVisibleRegionScreen->push_back(visibleRectScreen);
++        isVisible = true;
++    }
++    if(!isVisible) {
++        return false;
++    }
++
++    return true;
++}
++
++/**
+  * Calculates the layer's clipping rectangle
+  *
+  * @param aTransform Input. A transformation matrix
+@@ -260,12 +308,6 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+         return false;
+     }
+ 
+-    if (visibleRegion.GetNumRects() > 1) {
+-        // FIXME/bug 808339
+-        LOGD("Layer has nontrivial visible region");
+-        return false;
+-    }
+-
+     nsIntRect clip;
+     if (!CalculateClipRect(aParentTransform * aGLWorldTransform,
+                            aLayer->GetEffectiveClipRect(),
+@@ -383,8 +425,23 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+ 
+         hwcLayer.transform |= state.YFlipped() ? HWC_TRANSFORM_FLIP_V : 0;
+         hwc_region_t region;
+-        region.numRects = 1;
+-        region.rects = &(hwcLayer.displayFrame);
++        if (visibleRegion.GetNumRects() > 1) {
++            std::vector<hwc_rect_t> visibleRects;
++            mVisibleRegions.push_back(visibleRects);
++            if(!PrepareVisibleRegion(visibleRegion,
++                                     transform * aGLWorldTransform,
++                                     clip,
++                                     bufferRect,
++                                     &(mVisibleRegions.back()))) {
++                return true;
++            }
++            region.numRects = mVisibleRegions.back().size();
++            region.rects = &(mVisibleRegions.back()[0]);
++        }
++        else {
++            region.numRects = 1;
++            region.rects = &(hwcLayer.displayFrame);
++        }
+         hwcLayer.visibleRegionScreen = region;
+     } else {
+         hwcLayer.flags |= HWC_COLOR_FILL;
+diff --git a/widget/gonk/HwcComposer2D.h b/widget/gonk/HwcComposer2D.h
+index 7c69af6..74b0578 100644
+--- a/widget/gonk/HwcComposer2D.h
++++ b/widget/gonk/HwcComposer2D.h
+@@ -20,6 +20,8 @@
+ #include "Composer2D.h"
+ #include "HWComposer.h"
+ #include "Layers.h"
++#include <vector>
++#include <list>
+ 
+ namespace mozilla {
+ 
+@@ -54,6 +56,7 @@ private:
+     nsIntRect               mScreenRect;
+     int                     mMaxLayerCount;
+     bool                    mColorFill;
++    std::list<std::vector<hwc_rect_t>>   mVisibleRegions;
+ };
+ 
+ } // namespace mozilla

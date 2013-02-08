@@ -26,15 +26,6 @@
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 
-# Default GAIA_DOMAIN away from gaiamobile.org to prevent the UI from
-# automatically updating itself to an unknown version
-#
-# TODO: This GAIA_DOMAIN logic is duplicated in .config.  Fragile.
-GAIA_DOMAIN?=example.com
-# 'export' need to propagate the variable into the Gaia sub-make
-export GAIA_DOMAIN
-
-
 LOCAL_PATH:= $(call my-dir)
 
 FAKETOOLS_DX := $(abspath $(LOCAL_PATH)/faketools/dx)

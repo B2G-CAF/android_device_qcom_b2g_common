@@ -15,13 +15,6 @@ diff --git a/releasetools.py b/releasetools.py
 index 45d0953..33372e6 100755
 --- a/releasetools.py
 +++ b/releasetools.py
-@@ -1,5 +1,5 @@
- # Copyright (C) 2009 The Android Open Source Project
--# Copyright (c) 2011, Code Aurora Forum. All rights reserved.
-+# Copyright (c) 2011-2012, The Linux Foundation. All rights reserved.
- #
- # Licensed under the Apache License, Version 2.0 (the "License");
- # you may not use this file except in compliance with the License.
 @@ -19,22 +19,6 @@
  import common
  import re

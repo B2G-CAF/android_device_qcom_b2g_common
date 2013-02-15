@@ -1,5 +1,5 @@
 diff --git a/widget/gonk/HwcComposer2D.cpp b/widget/gonk/HwcComposer2D.cpp
-index 4492f5d..1a92d1a 100644
+index 63e7165..81c60ec 100644
 --- a/widget/gonk/HwcComposer2D.cpp
 +++ b/widget/gonk/HwcComposer2D.cpp
 @@ -194,6 +194,54 @@ PrepareLayerRects(nsIntRect aVisible, const gfxMatrix& aTransform,
@@ -70,7 +70,23 @@ index 4492f5d..1a92d1a 100644
      nsIntRect clip;
      if (!CalculateClipRect(aParentTransform * aGLWorldTransform,
                             aLayer->GetEffectiveClipRect(),
-@@ -383,8 +425,23 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+@@ -330,7 +372,14 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+ 
+     sp<GraphicBuffer> buffer = fillColor ? nullptr : GrallocBufferActor::GetFrom(*state.mSurface);
+ 
+-    nsIntRect visibleRect = visibleRegion.GetBounds();
++    nsIntRect visibleRect;
++    if (aLayer->Name() == "ShadowCanvasLayer" || aLayer->Name() == "ShadowImageLayer") {
++        visibleRect = nsIntRect(0, 0,
++            int(buffer->getWidth()), int(buffer->getHeight()));
++    }
++    else {
++        visibleRect = visibleRegion.GetBounds();
++    }
+ 
+     nsIntRect bufferRect;
+     if (fillColor) {
+@@ -385,8 +434,23 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
  
          hwcLayer.transform |= state.YFlipped() ? HWC_TRANSFORM_FLIP_V : 0;
          hwc_region_t region;
@@ -96,7 +112,7 @@ index 4492f5d..1a92d1a 100644
          hwcLayer.visibleRegionScreen = region;
      } else {
          hwcLayer.flags |= HWC_COLOR_FILL;
-@@ -405,6 +462,8 @@ HwcComposer2D::TryRender(Layer* aRoot,
+@@ -412,6 +476,8 @@ HwcComposer2D::TryRender(Layer* aRoot,
          mList->numHwLayers = 0;
      }
  

@@ -1,7 +1,25 @@
 diff --git a/widget/gonk/HwcComposer2D.cpp b/widget/gonk/HwcComposer2D.cpp
-index 63e7165..81c60ec 100644
+index 96a27ce..e383833 100644
 --- a/widget/gonk/HwcComposer2D.cpp
 +++ b/widget/gonk/HwcComposer2D.cpp
+@@ -166,7 +166,7 @@ PrepareLayerRects(nsIntRect aVisible, const gfxMatrix& aTransform,
+ 
+     //clip to buffer size
+     crop.IntersectRect(crop, aBufferRect);
+-    crop.RoundOut();
++    crop.RoundIn();
+ 
+     if (crop.IsEmpty()) {
+         LOGD("Skip layer");
+@@ -175,7 +175,7 @@ PrepareLayerRects(nsIntRect aVisible, const gfxMatrix& aTransform,
+ 
+     //propagate buffer clipping back to visible rect
+     visibleRectScreen = aTransform.TransformBounds(crop);
+-    visibleRectScreen.RoundOut();
++    visibleRectScreen.RoundIn();
+ 
+     // Map from layer space to buffer space
+     crop -= aBufferRect.TopLeft();
 @@ -194,6 +194,54 @@ PrepareLayerRects(nsIntRect aVisible, const gfxMatrix& aTransform,
  }
  
@@ -35,7 +53,7 @@ index 63e7165..81c60ec 100644
 +        gfxVisibleRect.IntersectRect(gfxVisibleRect, aBufferRect);
 +        gfxRect gfxVisibleRectScreen = aTransform.TransformBounds(gfxVisibleRect);
 +        gfxVisibleRectScreen.IntersectRect(gfxVisibleRectScreen, aClip);
-+        gfxVisibleRectScreen.RoundOut();
++        gfxVisibleRectScreen.RoundIn();
 +        if(gfxVisibleRectScreen.IsEmpty()) {
 +            continue;
 +        }

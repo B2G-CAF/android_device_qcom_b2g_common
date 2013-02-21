@@ -1,8 +1,8 @@
 diff --git a/libcopybit/copybit.cpp b/libcopybit/copybit.cpp
-index 6b91711..1787c57 100644
+index 93f6dd2..1b87657 100644
 --- a/libcopybit/copybit.cpp
 +++ b/libcopybit/copybit.cpp
-@@ -479,6 +479,49 @@ static int blit_copybit(
+@@ -472,6 +472,49 @@ static int blit_copybit(
      return stretch_copybit(dev, dst, src, &dr, &sr, region);
  }
  
@@ -52,7 +52,7 @@ index 6b91711..1787c57 100644
  /*****************************************************************************/
  
  /** Close the copybit device */
-@@ -509,6 +552,7 @@ static int open_copybit(const struct hw_module_t* module, const char* name,
+@@ -502,6 +545,7 @@ static int open_copybit(const struct hw_module_t* module, const char* name,
      ctx->device.get = get;
      ctx->device.blit = blit_copybit;
      ctx->device.stretch = stretch_copybit;
@@ -110,10 +110,10 @@ index 1d43554..420a730 100644
  
  /** Close the copybit device */
 diff --git a/libhwcomposer/hwcomposer.cpp b/libhwcomposer/hwcomposer.cpp
-index 11397d4..1d4a92c 100755
+index 55624bb..83b7cec 100755
 --- a/libhwcomposer/hwcomposer.cpp
 +++ b/libhwcomposer/hwcomposer.cpp
-@@ -1234,6 +1234,38 @@ private:
+@@ -1234,6 +1234,45 @@ private:
      mutable range r; 
  };
  
@@ -145,6 +145,13 @@ index 11397d4..1d4a92c 100755
 +    dst.base = (void *)fbHandle->base;
 +    dst.handle = (native_handle_t *)renderBuffer->handle;
 +
++    if ((dstRect.l < 0) || (dstRect.t < 0) ||
++        (dstRect.r - dstRect.l > dst.w) ||
++        (dstRect.b - dstRect.t > dst.h)) {
++        LOGE("%s: Invalid destination rect.", __FUNCTION__);
++        return -1;
++    }
++
 +    int res = copybit->fill(copybit, &dst, &dstRect, color);
 +    return res;
 +}
@@ -152,7 +159,7 @@ index 11397d4..1d4a92c 100755
  static int drawLayerUsingCopybit(hwc_composer_device_t *dev, hwc_layer_t *layer, EGLDisplay dpy,
                                   EGLSurface surface)
  {
-@@ -1251,6 +1283,11 @@ static int drawLayerUsingCopybit(hwc_composer_device_t *dev, hwc_layer_t *layer,
+@@ -1251,6 +1290,11 @@ static int drawLayerUsingCopybit(hwc_composer_device_t *dev, hwc_layer_t *layer,
  
      private_handle_t *hnd = (private_handle_t *)layer->handle;
      if(!hnd) {
@@ -165,7 +172,7 @@ index 11397d4..1d4a92c 100755
          return -1;
      }
 diff --git a/libqcomui/qcom_ui.h b/libqcomui/qcom_ui.h
-index b1ad528..2dbe156 100755
+index 7bcf5eb..8a4738e 100644
 --- a/libqcomui/qcom_ui.h
 +++ b/libqcomui/qcom_ui.h
 @@ -85,6 +85,7 @@ enum {

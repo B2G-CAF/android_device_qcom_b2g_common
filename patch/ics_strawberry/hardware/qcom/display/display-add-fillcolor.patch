@@ -1,5 +1,5 @@
 diff --git a/libcopybit/copybit.cpp b/libcopybit/copybit.cpp
-index 5407b6d..ed876e5 100644
+index 3d53c42..310225b 100644
 --- a/libcopybit/copybit.cpp
 +++ b/libcopybit/copybit.cpp
 @@ -481,6 +481,49 @@ static int blit_copybit(
@@ -87,7 +87,7 @@ index e6c55e0..72d1b28 100644
  
  
 diff --git a/libcopybit/copybit_c2d.cpp b/libcopybit/copybit_c2d.cpp
-index d75d4d7..987f1ee 100644
+index e7d0d39..d33afe7 100644
 --- a/libcopybit/copybit_c2d.cpp
 +++ b/libcopybit/copybit_c2d.cpp
 @@ -1286,6 +1286,16 @@ static int blit_copybit(
@@ -108,10 +108,10 @@ index d75d4d7..987f1ee 100644
  
  /** Close the copybit device */
 diff --git a/libhwcomposer/a-family/hwcomposer.cpp b/libhwcomposer/a-family/hwcomposer.cpp
-index 35fb2a6..a0311bb 100644
+index 35fb2a6..e1df62e 100644
 --- a/libhwcomposer/a-family/hwcomposer.cpp
 +++ b/libhwcomposer/a-family/hwcomposer.cpp
-@@ -1440,6 +1440,38 @@ private:
+@@ -1440,6 +1440,45 @@ private:
      mutable range r;
  };
  
@@ -143,6 +143,13 @@ index 35fb2a6..a0311bb 100644
 +    dst.base = (void *)fbHandle->base;
 +    dst.handle = (native_handle_t *)renderBuffer->handle;
 +
++    if ((dstRect.l < 0) || (dstRect.t < 0) ||
++        (dstRect.r - dstRect.l > dst.w) ||
++        (dstRect.b - dstRect.t > dst.h)) {
++        LOGE("%s: Invalid destination rect.", __FUNCTION__);
++        return -1;
++    }
++
 +    int res = copybit->fill(copybit, &dst, &dstRect, color);
 +    return res;
 +}
@@ -150,7 +157,7 @@ index 35fb2a6..a0311bb 100644
  static int drawLayerUsingCopybit(hwc_composer_device_t *dev, hwc_layer_t *layer, EGLDisplay dpy,
                                   EGLSurface surface)
  {
-@@ -1457,6 +1489,11 @@ static int drawLayerUsingCopybit(hwc_composer_device_t *dev, hwc_layer_t *layer,
+@@ -1457,6 +1496,11 @@ static int drawLayerUsingCopybit(hwc_composer_device_t *dev, hwc_layer_t *layer,
  
      private_handle_t *hnd = (private_handle_t *)layer->handle;
      if(!hnd) {
@@ -163,7 +170,7 @@ index 35fb2a6..a0311bb 100644
          return -1;
      }
 diff --git a/libqcomui/qcom_ui.h b/libqcomui/qcom_ui.h
-index 5deb603..6f3d04b 100644
+index ae5418f..681e90b 100644
 --- a/libqcomui/qcom_ui.h
 +++ b/libqcomui/qcom_ui.h
 @@ -95,6 +95,7 @@ enum {

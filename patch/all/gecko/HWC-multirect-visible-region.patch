@@ -1,5 +1,5 @@
 diff --git a/widget/gonk/HwcComposer2D.cpp b/widget/gonk/HwcComposer2D.cpp
-index 96a27ce..e383833 100644
+index 96a27ce..42f4b1e 100644
 --- a/widget/gonk/HwcComposer2D.cpp
 +++ b/widget/gonk/HwcComposer2D.cpp
 @@ -166,7 +166,7 @@ PrepareLayerRects(nsIntRect aVisible, const gfxMatrix& aTransform,
@@ -75,7 +75,17 @@ index 96a27ce..e383833 100644
   * Calculates the layer's clipping rectangle
   *
   * @param aTransform Input. A transformation matrix
-@@ -260,12 +308,6 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+@@ -251,21 +299,11 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+     }
+ 
+     float opacity = aLayer->GetEffectiveOpacity();
+-    if (opacity <= 0) {
+-        LOGD("Layer is fully transparent so skip rendering");
+-        return true;
+-    }
+-    else if (opacity < 1) {
++    if (opacity < 1) {
+         LOGD("Layer has planar semitransparency which is unsupported");
          return false;
      }
  
@@ -88,7 +98,7 @@ index 96a27ce..e383833 100644
      nsIntRect clip;
      if (!CalculateClipRect(aParentTransform * aGLWorldTransform,
                             aLayer->GetEffectiveClipRect(),
-@@ -330,7 +372,14 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+@@ -330,7 +368,14 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
  
      sp<GraphicBuffer> buffer = fillColor ? nullptr : GrallocBufferActor::GetFrom(*state.mSurface);
  
@@ -104,7 +114,7 @@ index 96a27ce..e383833 100644
  
      nsIntRect bufferRect;
      if (fillColor) {
-@@ -385,8 +434,23 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
+@@ -385,13 +430,33 @@ HwcComposer2D::PrepareLayerList(Layer* aLayer,
  
          hwcLayer.transform |= state.YFlipped() ? HWC_TRANSFORM_FLIP_V : 0;
          hwc_region_t region;
@@ -130,7 +140,18 @@ index 96a27ce..e383833 100644
          hwcLayer.visibleRegionScreen = region;
      } else {
          hwcLayer.flags |= HWC_COLOR_FILL;
-@@ -412,6 +476,8 @@ HwcComposer2D::TryRender(Layer* aRoot,
+         ColorLayer* colorLayer = static_cast<ColorLayer*>(layerGL->GetLayer());
+-        hwcLayer.transform = colorLayer->GetColor().Packed();
++        uint32_t color = colorLayer->GetColor().Packed();
++        if (((color >> 24) & 0xff) < 255) {
++            LOGD("Color layer has semitransparency which is unsupported");
++            return false;
++        }
++        hwcLayer.transform = color;
+     }
+ 
+     mList->numHwLayers++;
+@@ -412,6 +477,8 @@ HwcComposer2D::TryRender(Layer* aRoot,
          mList->numHwLayers = 0;
      }
  

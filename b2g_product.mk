@@ -1,4 +1,4 @@
-# Copyright (c) 2012, The Linux Foundation. All rights reserved.
+# Copyright (c) 2012,2013 The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -44,3 +44,57 @@ USE_JSMIN = 1
 endif
 
 export B2G_DEBUG
+
+
+#
+# Multilocale support.
+#
+# Define the B2G_LANGUAGE_PACK variable in the environment before a build
+# to select a preconfigured collection of locales.
+#
+# Alternatively manually define the LOCALES_FILE, GAIA_DEFAULT_LOCALE, and
+# MOZ_CHROME_MULTILOCALE environment variables to create new combinations
+# without modifying this file, if desired. More information about these
+# environment variables may be found at:
+#   https://developer.mozilla.org/en-US/docs/Mozilla/Firefox_OS/Building#Building_multilocale
+#
+
+ifeq ($(strip $(B2G_LANGUAGE_PACK)),basecamp)
+# Locales to enable for Gaia
+LOCALES_FILE=locales/languages_basecamp.json
+# Default Gaia locale
+GAIA_DEFAULT_LOCALE=en-US
+# Locales to enable for Gecko
+MOZ_CHROME_MULTILOCALE=pt-BR es-ES
+endif
+
+ifeq ($(strip $(B2G_LANGUAGE_PACK)),shira)
+# Locales to enable for Gaia
+LOCALES_FILE=locales/languages_shira.json
+# Default Gaia locale
+GAIA_DEFAULT_LOCALE=en-US
+# Locales to enable for Gecko
+MOZ_CHROME_MULTILOCALE=cs de hr hu pl ro
+endif
+
+
+# Env variables used for Gaia multilocale support
+LOCALE_BASEDIR=$(abspath gaia-l10n)
+export LOCALES_FILE
+export LOCALE_BASEDIR
+export GAIA_DEFAULT_LOCALE
+
+# Env variables used for Gecko multilocale support
+L10NBASEDIR=$(abspath gecko-l10n)
+export MOZ_CHROME_MULTILOCALE
+export L10NBASEDIR
+
+# Add compare-locales to the PATH for Gecko multilocale
+#
+# TODO: This could be instead added in gonk-misc/Android.mk
+#       when the Gecko build is involved to limit the scope of
+#       the PATH changes
+PATH:=$(PATH):$(abspath compare-locales/scripts)
+PYTHONPATH:=$(PYTHONPATH):$(abspath compare-locales/lib)
+export PATH
+export PYTHONPATH

@@ -145,6 +145,7 @@ LOCAL_ADDITIONAL_INSTALL_DEPENDENCIES += $(LOCAL_MODULE_PATH)/interfaces.manifes
 
 $(LOCAL_MODULE_PATH)/interfaces.manifest: PRIVATE_LOCAL_MODULE := $(LOCAL_MODULE)
 $(LOCAL_MODULE_PATH)/interfaces.manifest: $(GECKO_DIR)/config/buildlist.py
+	@mkdir -p $(@D)
 	$(PYTHON) $(GECKO_DIR)/config/buildlist.py $@ "interfaces $(PRIVATE_LOCAL_MODULE).xpt"
 endif
 

@@ -94,6 +94,11 @@ $(foreach lib,$(LOCAL_XPCOM_STATIC_LIBRARIES),\
 $(foreach lib,$(___LIBS),\
   $(eval $(lib): $(GECKO_OBJDIR)/dist/lib/$(notdir $(lib) ; mkdir -p $$(@D) && cp $$< $$@)))
 
+
+$(foreach lib,$(filter-out $(GLOBAL_SEEN_XPCOM_STATIC_LIBRARIES),$(LOCAL_XPCOM_STATIC_LIBRARIES)),\
+  $(eval $(TARGET_OUT_INTERMEDIATES)/STATIC_LIBRARIES/$(lib)_intermediates/export_includes: ; mkdir -p $$(@D) && touch $$@))
+GLOBAL_SEEN_XPCOM_STATIC_LIBRARIES += $(LOCAL_XPCOM_STATIC_LIBRARIES)
+
 LOCAL_STATIC_LIBRARIES := $(LOCAL_STATIC_LIBRARIES) $(LOCAL_XPCOM_STATIC_LIBRARIES)
 
 
@@ -105,6 +110,10 @@ $(foreach lib,$(LOCAL_XPCOM_SHARED_LIBRARIES),\
 
 $(foreach lib,$(___LIBS),\
   $(eval $(lib): $(GECKO_OBJDIR)/dist/lib/$(notdir $(lib) ; mkdir -p $$(@D) && cp $$< $$@)))
+
+$(foreach lib,$(filter-out $(GLOBAL_SEEN_XPCOM_SHARED_LIBRARIES),$(LOCAL_XPCOM_SHARED_LIBRARIES)),\
+  $(eval $(TARGET_OUT_INTERMEDIATES)/SHARED_LIBRARIES/$(lib)_intermediates/export_includes: ; mkdir -p $$(@D) && touch $$@))
+GLOBAL_SEEN_XPCOM_SHARED_LIBRARIES += $(LOCAL_XPCOM_SHARED_LIBRARIES)
 
 LOCAL_SHARED_LIBRARIES := $(LOCAL_SHARED_LIBRARIES) $(LOCAL_XPCOM_SHARED_LIBRARIES)
 

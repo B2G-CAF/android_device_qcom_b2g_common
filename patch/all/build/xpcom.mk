@@ -25,6 +25,8 @@ LOCAL_C_INCLUDES := $(LOCAL_C_INCLUDES) \
   $(ANDROID_PRODUCT_OUT)/obj/objdir-gecko/dist/include/nspr \
   $(TARGET_OUT_HEADERS)/xpcom
 
+include external/stlport/libstlport.mk
+
 # Compiler flags required by many Gecko libraries/sources
 LOCAL_CPPFLAGS := $(LOCAL_CPPFLAGS) -std=c++0x
 LOCAL_CFLAGS := $(LOCAL_CFLAGS) -D__STDC_INT64__ -D__STDC_LIMIT_MACROS -Wno-ignored-qualifiers

@@ -46,6 +46,10 @@ endif
 
 export B2G_DEBUG
 
+# .mk files useful for building xpcom components
+CLEAR_XPCOM_VARS:=$(dir $(firstword $(MAKEFILE_LIST)))clear_xpcom_vars.mk
+BUILD_XPCOM:=$(dir $(firstword $(MAKEFILE_LIST)))xpcom.mk
+
 
 #
 # Multilocale support.

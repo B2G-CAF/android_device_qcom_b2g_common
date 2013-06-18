@@ -33,6 +33,13 @@ LOCAL_CFLAGS := $(LOCAL_CFLAGS) -D__STDC_INT64__ -D__STDC_LIMIT_MACROS -Wno-igno
 LOCAL_CFLAGS += -Werror
 LOCAL_CFLAGS += -Wno-invalid-offsetof
 
+# Remove enforcement of compilation error on non-virtual destructors.
+#
+# All XPCOM interfaces are classes of pure virtual functions, with a
+# non virtual destructor. This is needed to compile XPCOM components
+# via Android build system.
+LOCAL_CFLAGS += -Wno-error=non-virtual-dtor -Wno-non-virtual-dtor
+
 # Enable DEBUG for -eng builds to activate runtime assertions
 ifneq ($(filter eng, $(TARGET_BUILD_VARIANT)),)
 LOCAL_CFLAGS += -DDEBUG

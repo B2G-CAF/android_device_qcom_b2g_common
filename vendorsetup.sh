@@ -1,4 +1,4 @@
-# Copyright (c) 2012, The Linux Foundation. All rights reserved.
+# Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -67,9 +67,8 @@ __patch_tree()
       cd $(gettop)
       local TREE_ID=${B2G_TREE_ID:-$(${B2G_TREEID_SH})}
 
-      echo ">> Android tree IDs: ${TREE_ID}"
+      echo "Tree IDs: ${TREE_ID}"
       set -e
-      echo -n ">> Analyzing workspace for change..."
       local LASTMD5SUM=invalid
       local MD5SUM=unknown
       if [[ -f out/lastpatch.md5sum ]]; then
@@ -77,9 +76,6 @@ __patch_tree()
          MD5SUM=$(__tree_md5sum ${B2G_PATCH_DIRS})
       fi
       if [[ "$LASTMD5SUM" != "$MD5SUM" ]]; then
-         echo "Change detected.  Applying B2G patches".
-
-         __abandon_tree
 
          branch() {
             [[ -d $1 ]] || return 1
@@ -111,6 +107,9 @@ __patch_tree()
             else
                patch -p1 < $1
             fi
+         }
+         cherrypick() {
+            cat $1 | cut -c 1-7 | xargs -n 1 git cherry-pick --no-commit
          }
          git_rm() {
             if [[ -d .git ]]; then
@@ -159,6 +158,11 @@ __patch_tree()
             done
          done
 
+         # Only abandon if there are any patches that need to be applied.
+         if [[ ${#PRJ_LIST[@]} -gt 0 ]] ; then
+           __abandon_tree
+         fi
+
          # Run through each project and apply patches
          ROOT_DIR=${PWD}
          for (( I=0 ; I<${#PRJ_LIST[@]} ; I++ )) ; do
@@ -199,6 +203,7 @@ __patch_tree()
                      case $P in
                      *.patch)  apply ${ROOT_DIR}/$P ;;
                      *.sh)     source ${ROOT_DIR}/$P ;;
+                     *.sha1)   cherrypick ${ROOT_DIR}/$P ;;
                      esac
                   done
                   commit
@@ -214,12 +219,8 @@ __patch_tree()
             set -e
          done
 
-         echo
-         echo B2G patches applied.
          mkdir -p out
          echo $(__tree_md5sum ${B2G_PATCH_DIRS}) > out/lastpatch.md5sum
-      else
-         echo no changes detected.
       fi
    )
    ERR=$?

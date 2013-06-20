@@ -52,9 +52,4 @@ if [[ -f .repo/manifest.xml ]] ; then
    done
 fi
 
-if [ -z "$TREEID" ]; then
-  TREEID="ics_strawberry ics"
-  echo $0: Warning: Unable to classify tree.  Using default: $TREEID
-fi
-
 echo $TREEID all

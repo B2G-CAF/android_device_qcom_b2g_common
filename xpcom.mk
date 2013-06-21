@@ -171,14 +171,26 @@ endif
 INSTALLED_JS_FILES := $(addprefix $(LOCAL_MODULE_PATH)/,$(LOCAL_JS_SRC_FILES))
 LOCAL_ADDITIONAL_INSTALL_DEPENDENCIES += $(INSTALLED_JS_FILES)
 
+ifneq ($(wildcard external/jslint/closure_linter/gjslint.py),)
+PYTHONPATH:=$(PYTHONPATH):$(ANDROID_BUILD_TOP)/external/jslint/
+export PYTHONPATH
+GJSLINT := $(PYTHON) $(ANDROID_BUILD_TOP)/external/jslint/closure_linter/gjslint.py
+endif
+
 ifdef USE_JSMIN
 JSMIN := $(BUILD_OUT_EXECUTABLES)/jsmin$(BUILD_EXECUTABLE_SUFFIX)
 $(INSTALLED_JS_FILES): PRIVATE_JS_NOTICE := $(LOCAL_JS_NOTICE)
 $(INSTALLED_JS_FILES): $(LOCAL_MODULE_PATH)/%.js: $(LOCAL_PATH)/%.js $(JSMIN) $(DEPENDS_ON_GECKO)
+ifdef GJSLINT
+	$(GJSLINT) $<
+endif
 	@mkdir -p $(@D)
 	$(JSMIN) < $< > $@ '$(PRIVATE_JS_NOTICE)'
 else
 $(INSTALLED_JS_FILES): $(LOCAL_MODULE_PATH)/%.js: $(LOCAL_PATH)/%.js $(ACP) $(DEPENDS_ON_GECKO)
+ifdef GJSLINT
+	$(GJSLINT) $<
+endif
 	@mkdir -p $(@D)
 	$(ACP) $< $@
 endif

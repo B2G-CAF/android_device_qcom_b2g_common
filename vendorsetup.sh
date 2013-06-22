@@ -109,7 +109,7 @@ __patch_tree()
             fi
          }
          cherrypick() {
-            cat $1 | cut -c 1-7 | xargs -n 1 git cherry-pick --no-commit
+            cat $1 | cut -c 1-7 | xargs -n 1 git cherry-pick
          }
          git_rm() {
             if [[ -d .git ]]; then
@@ -125,9 +125,8 @@ __patch_tree()
          }
          commit() {
             if [[ -d .git ]]; then
-               git commit --all -m "B2G Adaptations" --allow-empty -q
+               git commit --all -m "$1" -q
             fi
-            popd > /dev/null
          }
 
          # Find all of the patches for TREE_ID
@@ -201,12 +200,12 @@ __patch_tree()
 
                      echo "  ${P}"
                      case $P in
-                     *.patch)  apply ${ROOT_DIR}/$P ;;
-                     *.sh)     source ${ROOT_DIR}/$P ;;
+                     *.patch)  apply ${ROOT_DIR}/$P ; commit $P ;;
+                     *.sh)     source ${ROOT_DIR}/$P ; commit $P ;;
                      *.sha1)   cherrypick ${ROOT_DIR}/$P ;;
                      esac
                   done
-                  commit
+                  popd > /dev/null
                fi
             )
             local ERR=$?

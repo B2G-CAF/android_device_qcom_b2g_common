@@ -38,8 +38,8 @@ fi
 
 TREEID=
 if [[ -f .repo/manifest.xml ]] ; then
-   # Tokenize <default revision="x_y_z"/> by '_'
-   TOKENS=$(sed -e \ '/<default.*/!d ; s/^.*revision="// ; s/".*$// ; s/refs\/tags\/// ; s/.*\/// ; s/_/ /g;' .repo/manifest.xml)
+   # Tokenize "Manifest branch: x_y_z" by '_'
+   TOKENS=$(repo info .repo/manifests | head -n1 | cut -d' '  -f3 | sed -e 's/.*\/// ; s/_/ /g;')
 
    MANIFEST_ID=
    for T in $TOKENS; do

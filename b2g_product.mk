@@ -79,7 +79,7 @@ LOCALES_FILE=locales/languages_shira.json
 # Default Gaia locale
 GAIA_DEFAULT_LOCALE=en-US
 # Locales to enable for Gecko
-MOZ_CHROME_MULTILOCALE=cs de hr hu pl ro
+MOZ_CHROME_MULTILOCALE=cs de hr hu pl sr ro
 endif
 
 

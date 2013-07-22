@@ -75,7 +75,7 @@ __patch_tree()
          LASTMD5SUM=$(cat out/lastpatch.md5sum)
          MD5SUM=$(__tree_md5sum ${B2G_PATCH_DIRS})
       fi
-      if [[ "$LASTMD5SUM" != "$MD5SUM" ]]; then
+      if [[ "$LASTMD5SUM" != "$MD5SUM" || $1 == "force" ]]; then
 
          branch() {
             [[ -d $1 ]] || return 1

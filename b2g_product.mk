@@ -40,6 +40,10 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.moz.omx.hw.max_width=800 \
   ro.moz.omx.hw.max_height=480
 
+ifneq ($(PLATFORM_SDK_VERSION), 15)
+PRODUCT_PROPERTY_OVERRIDES += ro.moz.devinputjack=1
+endif
+
 ifneq ($(filter user userdebug, $(TARGET_BUILD_VARIANT)),)
 USE_JSMIN = 1
 endif

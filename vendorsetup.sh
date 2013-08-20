@@ -265,3 +265,5 @@ if [[ -d gaia/xulrunner-sdk/.git ]]; then
    export USE_LOCAL_XULRUNNER_SDK=1
 fi
 
+# Don't build sources.xml
+export DISABLE_SOURCES_XML=true

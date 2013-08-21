@@ -1,0 +1,71 @@
+From ab91f760d1dab21a2cd485147495f65c9c924d18 Mon Sep 17 00:00:00 2001
+From: Sushil Chauhan <sushilchauhan@codeaurora.org>
+Date: Thu, 1 Aug 2013 12:39:16 -0700
+Subject: [PATCH] hwc: Use GPU workaround on msm7627a target only.
+
+It can cause regression on non msm7627a targets.
+
+Change-Id: If537db1287cd4dffe28e7c148b709d26fb95f9a6
+---
+ libhwcomposer/a-family/Android.mk     | 3 +++
+ libhwcomposer/a-family/hwcomposer.cpp | 2 ++
+ 2 files changed, 5 insertions(+)
+
+diff --git a/libhwcomposer/a-family/Android.mk b/libhwcomposer/a-family/Android.mk
+index 6a2e5c7..ebc3b19 100644
+--- a/libhwcomposer/a-family/Android.mk
++++ b/libhwcomposer/a-family/Android.mk
+@@ -34,10 +34,13 @@ LOCAL_CFLAGS += -DCOMPOSITION_BYPASS
+ endif
+ ifeq ($(TARGET_USE_HDMI_AS_PRIMARY),true)
+ LOCAL_CFLAGS += -DHDMI_AS_PRIMARY
+ endif
+ ifeq ($(TARGET_USES_POST_PROCESSING),true)
+ LOCAL_CFLAGS += -DUSES_POST_PROCESSING
+ LOCAL_C_INCLUDES += $(TARGET_OUT_HEADERS)/pp/inc
+ endif
++ifeq ($(call is-board-platform,msm7627a),true)
++LOCAL_CFLAGS += -DTARGET_7627A
++endif
+ LOCAL_MODULE_TAGS := optional
+ include $(BUILD_SHARED_LIBRARY)
+diff --git a/libhwcomposer/a-family/hwcomposer.cpp b/libhwcomposer/a-family/hwcomposer.cpp
+index 35fb2a6..f034a2b 100644
+--- a/libhwcomposer/a-family/hwcomposer.cpp
++++ b/libhwcomposer/a-family/hwcomposer.cpp
+@@ -1497,30 +1497,32 @@ static int drawLayerUsingCopybit(hwc_composer_device_t *dev, hwc_layer_t *layer,
+ 
+     int layerTransform = layer->transform ;
+     // When flip and rotation(90) are present alter the flip,
+     // as GPU is doing the flip and rotation in opposite order
+     // to that of MDP3.0
+     // For 270 degrees, we get 90 + (H+V) which is same as doing
+     // flip first and then rotation (H+V) + 90
+ #ifdef USE_MDP3
++#ifdef TARGET_7627A
+     if (((layer->transform& HAL_TRANSFORM_FLIP_H) ||
+        (layer->transform & HAL_TRANSFORM_FLIP_V)) &&
+        (layer->transform &  HAL_TRANSFORM_ROT_90) &&
+        !(layer->transform ==  HAL_TRANSFORM_ROT_270)){
+         if(layer->transform & HAL_TRANSFORM_FLIP_H){
+             layerTransform ^= HAL_TRANSFORM_FLIP_H;
+             layerTransform |= HAL_TRANSFORM_FLIP_V;
+         }
+         if(layer->transform & HAL_TRANSFORM_FLIP_V){
+             layerTransform ^= HAL_TRANSFORM_FLIP_V;
+             layerTransform |= HAL_TRANSFORM_FLIP_H;
+         }
+     }
+ #endif
++#endif
+ 
+     // Remove the srcBufferTransform if any
+     layer->transform = (layer->transform & FINAL_TRANSFORM_MASK);
+ 
+     // Copybit source rect
+     hwc_rect_t sourceCrop = layer->sourceCrop;
+     copybit_rect_t srcRect = {sourceCrop.left, sourceCrop.top,
+                               sourceCrop.right,
+-- 
+1.8.2.1
+

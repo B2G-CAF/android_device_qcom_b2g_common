@@ -261,7 +261,7 @@ else
 fi
 
 # Use a local Xulrunner SDK copy instead of downloading
-if [[ -d gaia/xulrunner-sdk/.git ]]; then
+if [[ -d gaia/xulrunner-sdk-26/.git ]]; then
    export USE_LOCAL_XULRUNNER_SDK=1
 fi
 

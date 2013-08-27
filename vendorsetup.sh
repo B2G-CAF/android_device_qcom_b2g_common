@@ -260,9 +260,18 @@ else
    esac
 fi
 
+if [ `uname` == 'Darwin' ]; then
+   XULRUNNER_DIRECTORY="$(gettop)/xulrunner-sdk-mac"
+else
+   XULRUNNER_DIRECTORY="$(gettop)/xulrunner-sdk-linux"
+fi
+
 # Use a local Xulrunner SDK copy instead of downloading
-if [[ -d gaia/xulrunner-sdk-26/.git ]]; then
+if [[ -d ${XULRUNNER_DIRECTORY}/.git ]]; then
    export USE_LOCAL_XULRUNNER_SDK=1
+   export XULRUNNER_DIRECTORY
+else
+   unset XULRUNNER_DIRECTORY
 fi
 
 # Don't build sources.xml

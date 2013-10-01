@@ -12,6 +12,10 @@ LOCAL_XPIDL_OUT := $(LOCAL_XPCOM_MODULE_OBJDIR)/xpidl_obj
 # The directory where the final xpcom module will be installed to
 LOCAL_MODULE_PATH := $(TARGET_OUT)/b2g/distribution/bundles/$(LOCAL_MODULE)
 
+# Install unstripped lib into symbols/system/lib/ instead of
+# symbols/system/b2g/distribution/.. to avoid special case gdb path handling
+LOCAL_UNSTRIPPED_PATH = $(TARGET_OUT_SHARED_LIBRARIES_UNSTRIPPED)
+
 # Extract Javascript sources into a separate macro
 LOCAL_JS_SRC_FILES := $(filter %.js,$(LOCAL_SRC_FILES))
 LOCAL_SRC_FILES := $(filter-out %.js,$(LOCAL_SRC_FILES))

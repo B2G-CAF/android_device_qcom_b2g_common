@@ -81,9 +81,8 @@ REPORT_BUILD = @echo $(notdir $<)
 # to its absolute path.
 CURRENT_IDLS = $(abspath $<)
 
-PYTHON := python
-PYTHON_PATH := $(PYTHON) $(GECKO_DIR)/config/pythonpath.py
-XPIDL_LINK := $(PYTHON) $(LIBXUL_DIST)/sdk/bin/xpt.py link
+XPCOM_PYTHON := python $(GECKO_DIR)/config/pythonpath.py
+XPIDL_LINK := $(XPCOM_PYTHON) $(LIBXUL_DIST)/sdk/bin/xpt.py link
 
 INSTALL := install
 INSTALL_FLAGS := -m 644
@@ -147,12 +146,12 @@ endif
 $(LOCAL_XPIDL_OUT)/%.h: $(LOCAL_PATH)/%.idl $(XPIDL_DEPS)
 	@mkdir -p $(@D)
 	$(REPORT_BUILD)
-	$(PYTHON_PATH) $(PLY_INCLUDE) $(LIBXUL_DIST)/sdk/bin/header.py $(LOCAL_XPIDL_FLAGS) $(CURRENT_IDLS) -o $@
+	$(XPCOM_PYTHON) $(PLY_INCLUDE) $(LIBXUL_DIST)/sdk/bin/header.py $(LOCAL_XPIDL_FLAGS) $(CURRENT_IDLS) -o $@
 
 $(LOCAL_XPIDL_OUT)/%.xpt: $(LOCAL_PATH)/%.idl $(XPIDL_DEPS)
 	@mkdir -p $(@D)
 	$(REPORT_BUILD)
-	$(PYTHON_PATH) $(PLY_INCLUDE) -I$(GECKO_DIR)/xpcom/typelib/xpt/tools $(LIBXUL_DIST)/sdk/bin/typelib.py $(LOCAL_XPIDL_FLAGS) $(CURRENT_IDLS) -o $@
+	$(XPCOM_PYTHON) $(PLY_INCLUDE) -I$(GECKO_DIR)/xpcom/typelib/xpt/tools $(LIBXUL_DIST)/sdk/bin/typelib.py $(LOCAL_XPIDL_FLAGS) $(CURRENT_IDLS) -o $@
 
 $(LOCAL_XPIDL_OUT)/$(LOCAL_MODULE).xpt: $(patsubst %.idl,$(LOCAL_XPIDL_OUT)/%.xpt,$(LOCAL_XPCOM_IDLS)) $(DEPENDS_ON_GECKO)
 	$(XPIDL_LINK) $@ $(filter-out $(DEPENDS_ON_GECKO), $^)
@@ -161,14 +160,18 @@ $(LOCAL_MODULE_PATH)/$(LOCAL_MODULE).xpt: $(LOCAL_XPIDL_OUT)/$(LOCAL_MODULE).xpt
 	@mkdir -p $(@D)
 	$(INSTALL) $(INSTALL_FLAGS) $^ $(@D)
 
+BUILDLIST_PY := $(wildcard $(GECKO_DIR)/config/buildlist.py \
+  $(GECKO_DIR)/python/mozbuild/mozbuild/action/buildlist.py)
+
+MOZBUILD_INCLUDE := -I$(GECKO_DIR)/python/mozbuild
 
 ifneq (,$(strip $(LOCAL_XPCOM_IDLS)))
 LOCAL_ADDITIONAL_INSTALL_DEPENDENCIES += $(LOCAL_MODULE_PATH)/interfaces.manifest
 
 $(LOCAL_MODULE_PATH)/interfaces.manifest: PRIVATE_LOCAL_MODULE := $(LOCAL_MODULE)
-$(LOCAL_MODULE_PATH)/interfaces.manifest: $(GECKO_DIR)/config/buildlist.py
+$(LOCAL_MODULE_PATH)/interfaces.manifest: $(BUILDLIST_PY)
 	@mkdir -p $(@D)
-	$(PYTHON) $(GECKO_DIR)/config/buildlist.py $@ "interfaces $(PRIVATE_LOCAL_MODULE).xpt"
+	$(XPCOM_PYTHON) $(MOZBUILD_INCLUDE) $(BUILDLIST_PY) $@ "interfaces $(PRIVATE_LOCAL_MODULE).xpt"
 endif
 
 
@@ -176,9 +179,8 @@ INSTALLED_JS_FILES := $(addprefix $(LOCAL_MODULE_PATH)/,$(LOCAL_JS_SRC_FILES))
 LOCAL_ADDITIONAL_INSTALL_DEPENDENCIES += $(INSTALLED_JS_FILES)
 
 ifneq ($(wildcard external/jslint/closure_linter/gjslint.py),)
-PYTHONPATH:=$(PYTHONPATH):$(ANDROID_BUILD_TOP)/external/jslint/
-export PYTHONPATH
-GJSLINT := $(PYTHON) $(ANDROID_BUILD_TOP)/external/jslint/closure_linter/gjslint.py
+GJSLINT := $(XPCOM_PYTHON) -I$(ANDROID_BUILD_TOP)/external/jslint \
+  $(ANDROID_BUILD_TOP)/external/jslint/closure_linter/gjslint.py
 endif
 
 ifdef USE_JSMIN
@@ -201,14 +203,14 @@ endif
 
 LOCAL_ADDITIONAL_INSTALL_DEPENDENCIES += $(LOCAL_MODULE_PATH)/chrome.manifest
 
-$(LOCAL_MODULE_PATH)/chrome.manifest: $(LOCAL_PATH)/chrome.manifest $(GECKO_DIR)/config/buildlist.py $(ACP)
+$(LOCAL_MODULE_PATH)/chrome.manifest: $(LOCAL_PATH)/chrome.manifest $(BUILDLIST_PY) $(ACP)
 	@mkdir -p $(@D)
 	$(ACP) $< $@
 ifneq (,$(strip $(LOCAL_XPCOM_IDLS)))
-	$(PYTHON) $(GECKO_DIR)/config/buildlist.py $@ "manifest interfaces.manifest"
+	$(XPCOM_PYTHON) $(MOZBUILD_INCLUDE) $(BUILDLIST_PY) $@ "manifest interfaces.manifest"
 endif
 
-$(GECKO_DIR)/config/buildlist.py: $(DEPENDS_ON_GECKO)
+$(BUILDLIST_PY): $(DEPENDS_ON_GECKO)
 
 include $(BUILD_SHARED_LIBRARY)
 

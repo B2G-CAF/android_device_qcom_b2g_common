@@ -37,8 +37,8 @@ PRODUCT_PROPERTY_OVERRIDES += \
   ro.display.colorfill=1 \
   ro.moz.ril.emergency_by_default=true \
   org.bluez.device.conn.type=array \
-  ro.moz.omx.hw.max_width=1280 \
-  ro.moz.omx.hw.max_height=720
+  ro.moz.omx.hw.max_width=800 \
+  ro.moz.omx.hw.max_height=480
 
 ifneq ($(PLATFORM_SDK_VERSION), 15)
 PRODUCT_PROPERTY_OVERRIDES += ro.moz.devinputjack=1

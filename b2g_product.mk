@@ -48,6 +48,18 @@ ifneq ($(filter user userdebug, $(TARGET_BUILD_VARIANT)),)
 USE_JSMIN = 1
 endif
 
+
+#
+# Disable parallel make for gaia to improve build stability.
+#
+# It would be nice to use $(ANDROID_BUILD_TOP) instead of '%', but the |my-dir|
+# macro used to compute the LOCAL_PATH macro in gaia/Android.mk has been
+# observed to produce different results from $(ANDROID_BUILD_TOP) when there
+# is a symbolic link in the path to the build root.
+#
+%/gaia/profile.tar.gz: MAKE:=$(MAKE) -j1
+
+
 export B2G_DEBUG
 
 # .mk files useful for building xpcom components

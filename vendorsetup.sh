@@ -263,6 +263,7 @@ fi
 # Use a local xulrunner SDK if present instead of downloading a new copy
 if [[ -d gaia/xulrunner-sdk/.git ]]; then
    export USE_LOCAL_XULRUNNER_SDK=1
+   export XULRUNNER_DIRECTORY="$(gettop)/gaia/xulrunner-sdk"
 fi
 
 # Don't build sources.xml

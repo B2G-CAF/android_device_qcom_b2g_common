@@ -58,6 +58,7 @@ endif
 # is a symbolic link in the path to the build root.
 #
 %/gaia/profile.tar.gz: MAKE:=$(MAKE) -j1
+gaia/profile.tar.gz: MAKE:=$(MAKE) -j1
 
 
 export B2G_DEBUG

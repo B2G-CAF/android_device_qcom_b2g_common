@@ -1,0 +1,13 @@
+diff --git a/ipc/chromium/src/base/process_util_linux.cc b/ipc/chromium/src/base/process_util_linux.cc
+index bf34384..63d63ee 100644
+--- a/ipc/chromium/src/base/process_util_linux.cc
++++ b/ipc/chromium/src/base/process_util_linux.cc
+@@ -303,7 +303,7 @@ void SetCurrentProcessPrivileges(ChildPrivileges privs) {
+     uid += getpid();
+   }
+   if (privs == PRIVILEGES_CAMERA) {
+-    gid_t groups[] = { AID_SDCARD_RW };
++    gid_t groups[] = { AID_SDCARD_R, AID_SDCARD_RW, AID_MEDIA_RW };
+     if (setgroups(sizeof(groups) / sizeof(groups[0]), groups) != 0) {
+       DLOG(ERROR) << "FAILED TO setgroups() CHILD PROCESS";
+       _exit(127);

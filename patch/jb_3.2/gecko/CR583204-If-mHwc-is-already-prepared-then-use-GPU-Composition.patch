@@ -1,0 +1,118 @@
+From fffade0f398a91c63dc0580dbb3fa16b5a4733b3 Mon Sep 17 00:00:00 2001
+From: Sushil Chauhan <sushilchauhan@codeaurora.org>
+Date: Sat, 7 Dec 2013 20:22:06 -0800
+Subject: [PATCH] If mHwc is already prepared, then use GPU Composition.
+
+In a use-case, if mHwc is already prepared then use GPU Composition.
+Updated FrameBuffer surface will get displayed and draw-lock in HAL
+will get unlocked.
+
+Change-Id: I4efce4fcfd978fcff6315477b2a541ab62cfbb5e
+---
+ widget/gonk/HwcComposer2D.cpp |   18 ++++++++++--------
+ widget/gonk/HwcComposer2D.h   |    1 +
+ 2 files changed, 11 insertions(+), 8 deletions(-)
+
+diff --git a/widget/gonk/HwcComposer2D.cpp b/widget/gonk/HwcComposer2D.cpp
+index 97556f7..2ebcd22 100644
+--- a/widget/gonk/HwcComposer2D.cpp
++++ b/widget/gonk/HwcComposer2D.cpp
+@@ -64,6 +64,7 @@ HwcComposer2D::HwcComposer2D()
+     , mColorFill(false)
+     , mRBSwapSupport(false)
+     , mPrevRetireFence(-1)
++    , mHwcPrepared(false)
+ {
+ }
+ 
+@@ -451,7 +452,6 @@ HwcComposer2D::TryHwComposition()
+ 
+     if (!(fbsurface && fbsurface->lastHandle)) {
+         LOGD("H/W Composition failed. FBSurface not initialized.");
+-        mList->numHwLayers = 0;
+         return false;
+     }
+ 
+@@ -460,7 +460,6 @@ HwcComposer2D::TryHwComposition()
+     if (idx >= mMaxLayerCount) {
+         if (!ReallocLayerList() || idx >= mMaxLayerCount) {
+             LOGE("TryHwComposition failed! Could not add FB layer");
+-            mList->numHwLayers = 0;
+             return false;
+         }
+     }
+@@ -495,7 +494,7 @@ HwcComposer2D::TryHwComposition()
+ 
+     // No composition on FB layer, so closing releaseFenceFd
+     close(mList->hwLayers[idx].releaseFenceFd);
+-    mList->numHwLayers = 0;
++    mHwcPrepared = false;
+     return true;
+ }
+ 
+@@ -512,10 +511,11 @@ HwcComposer2D::Render(EGLDisplay dpy, EGLSurface sur)
+     FramebufferSurface* fbsurface = (FramebufferSurface*)(GetGonkDisplay()->GetFBSurface());
+     if (!fbsurface) {
+         LOGE("H/W Composition failed. FBSurface not initialized.");
++        mHwcPrepared = false;
+         return false;
+     }
+ 
+-    if (mList->numHwLayers != 0) {
++    if (mHwcPrepared) {
+         // No mHwc prepare, if already prepared in current draw cycle
+         mList->hwLayers[mList->numHwLayers - 1].handle = fbsurface->lastHandle;
+         mList->hwLayers[mList->numHwLayers - 1].acquireFenceFd = fbsurface->lastFenceFD;
+@@ -535,7 +535,7 @@ HwcComposer2D::Render(EGLDisplay dpy, EGLSurface sur)
+     Commit();
+ 
+     GetGonkDisplay()->SetFBReleaseFd(mList->hwLayers[mList->numHwLayers - 1].releaseFenceFd);
+-    mList->numHwLayers = 0;
++    mHwcPrepared = false;
+     return true;
+ }
+ 
+@@ -567,6 +567,7 @@ HwcComposer2D::Prepare(buffer_handle_t fbHandle, int fence)
+     mList->hwLayers[idx].planeAlpha = 0xFF;
+ 
+     mHwc->prepare(mHwc, HWC_NUM_DISPLAY_TYPES, displays);
++    mHwcPrepared = true;
+ }
+ 
+ bool
+@@ -636,6 +637,10 @@ HwcComposer2D::TryRender(Layer* aRoot,
+ 
+     MOZ_ASSERT(Initialized());
+     if (mList) {
++        if (mHwcPrepared && mList->numHwLayers > 0) {
++            // If mHwc is already prepared, use GPU Composition
++            return false;
++        }
+         mList->numHwLayers = 0;
+         mHwcLayerMap.Clear();
+     }
+@@ -651,9 +656,6 @@ HwcComposer2D::TryRender(Layer* aRoot,
+                           aGLWorldTransform))
+     {
+         LOGD("Render aborted. Nothing was drawn to the screen");
+-        if (mList) {
+-           mList->numHwLayers = 0;
+-        }
+         return false;
+     }
+ 
+diff --git a/widget/gonk/HwcComposer2D.h b/widget/gonk/HwcComposer2D.h
+index 2ca4def..73a0919 100644
+--- a/widget/gonk/HwcComposer2D.h
++++ b/widget/gonk/HwcComposer2D.h
+@@ -84,6 +84,7 @@ private:
+     nsTArray<int>           mPrevReleaseFds;
+     int                     mPrevRetireFence;
+     nsTArray<layers::LayerComposite*> mHwcLayerMap;
++    bool                    mHwcPrepared;
+ };
+ 
+ } // namespace mozilla
+-- 
+1.7.6
+

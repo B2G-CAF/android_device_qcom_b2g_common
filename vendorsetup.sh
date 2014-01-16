@@ -101,9 +101,9 @@ __patch_tree()
                fi
             fi
          }
-         apply() {
+         am() {
             if [[ -d .git ]]; then
-               git apply --index $1
+               git am $1
             else
                patch -p1 < $1
             fi
@@ -200,7 +200,7 @@ __patch_tree()
 
                      echo "  ${P}"
                      case $P in
-                     *.patch)  apply ${ROOT_DIR}/$P ; commit $P ;;
+                     *.patch)  am ${ROOT_DIR}/$P ;;
                      *.sh)     source ${ROOT_DIR}/$P ; commit $P ;;
                      *.sha1)   cherrypick ${ROOT_DIR}/$P ;;
                      esac

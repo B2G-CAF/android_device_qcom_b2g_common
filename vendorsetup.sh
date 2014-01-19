@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+# Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -264,6 +264,10 @@ fi
 if [[ -d gaia/xulrunner-sdk/.git ]]; then
    export USE_LOCAL_XULRUNNER_SDK=1
    export XULRUNNER_DIRECTORY="$(gettop)/gaia/xulrunner-sdk"
+
+elif [[ -d gaia/xulrunner-sdk-$(uname)/.git ]]; then
+   export USE_LOCAL_XULRUNNER_SDK=1
+   export XULRUNNER_DIRECTORY="$(gettop)/gaia/xulrunner-sdk-$(uname)"
 fi
 
 # Don't build sources.xml

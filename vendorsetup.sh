@@ -56,7 +56,11 @@ __abandon_tree()
 {
    rm -f out/lastpatch.md5sum
    if [[ -d .repo ]]; then
-      ${REPO} abandon b2g_autogen_ephemeral_branch || true
+      if [[ -f out/lastpatch.projects ]] ; then
+        ${REPO} abandon b2g_autogen_ephemeral_branch $(cat out/lastpatch.projects) || true
+      else
+        ${REPO} abandon b2g_autogen_ephemeral_branch || true
+      fi
    fi
 }
 
@@ -80,6 +84,7 @@ __patch_tree()
          branch() {
             [[ -d $1 ]] || return 1
 
+            echo $1 >> out/lastpatch.projects
             pushd $1 > /dev/null
             echo
             echo [entering $1]
@@ -160,6 +165,7 @@ __patch_tree()
          # Only abandon if there are any patches that need to be applied.
          if [[ ${#PRJ_LIST[@]} -gt 0 ]] ; then
            __abandon_tree
+           rm -f out/lastpatch.projects
          fi
 
          # Run through each project and apply patches

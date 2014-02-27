@@ -5,13 +5,13 @@ Subject: [PATCH] Update callbacks to match bluetooth.h
 
 Change-Id: Icf999d026cdecfb1e316352325d93b4f7bf9db56
 ---
- dom/bluedroid/gonk/BluetoothServiceBluedroid.cpp   |    9 ++++++++-
+ dom/bluedroid/BluetoothServiceBluedroid.cpp   |    9 ++++++++-
  1 files changed, 8 insertions(+), 1 deletions(-)
 
-diff --git a/dom/bluetooth/bluedroid/gonk/BluetoothServiceBluedroid.cpp b/dom/bluetooth/bluedroid/gonk/BluetoothServiceBluedroid.cpp
+diff --git a/dom/bluetooth/bluedroid/BluetoothServiceBluedroid.cpp b/dom/bluetooth/bluedroid/BluetoothServiceBluedroid.cpp
 index 560f165..3649796 100644
---- a/dom/bluetooth/bluedroid/gonk/BluetoothServiceBluedroid.cpp
-+++ b/dom/bluetooth/bluedroid/gonk/BluetoothServiceBluedroid.cpp
+--- a/dom/bluetooth/bluedroid/BluetoothServiceBluedroid.cpp
++++ b/dom/bluetooth/bluedroid/BluetoothServiceBluedroid.cpp
 @@ -489,8 +489,14 @@ DiscoveryStateChangedCallback(bt_discovery_state_t aState)
  }
  

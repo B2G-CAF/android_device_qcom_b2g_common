@@ -1,4 +1,4 @@
-# Copyright (c) 2012,2013 The Linux Foundation. All rights reserved.
+# Copyright (c) 2012,2013,2014 The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -65,6 +65,12 @@ export B2G_DEBUG
 CLEAR_XPCOM_VARS:=$(dir $(firstword $(MAKEFILE_LIST)))clear_xpcom_vars.mk
 BUILD_XPCOM:=$(dir $(firstword $(MAKEFILE_LIST)))xpcom.mk
 
+
+# GAIA_DISTRIBUTION_DIR enables overrides for Gaia settings
+ifndef GAIA_DISTRIBUTION_DIR
+GAIA_DISTRIBUTION_DIR:=$(ANDROID_BUILD_TOP)/out/target/product/$(TARGET_PRODUCT)/gaia_distribution
+export GAIA_DISTRIBUTION_DIR
+endif
 
 #
 # Multilocale support.

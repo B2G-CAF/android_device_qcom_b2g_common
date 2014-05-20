@@ -103,6 +103,14 @@ GAIA_DEFAULT_LOCALE=en-US
 MOZ_CHROME_MULTILOCALE=cs de hr hu pl sr ro
 endif
 
+ifeq ($(strip $(B2G_LANGUAGE_PACK)),full)
+# Locales to enable for Gaia
+LOCALES_FILE=locales/languages_full.json
+# Default Gaia locale
+GAIA_DEFAULT_LOCALE=en-US
+# Locales to enable for Gecko
+MOZ_CHROME_MULTILOCALE=ar cs de el en-US es-ES fr hr hu pl pt-BR ro sk sr zh-TW
+endif
 
 # Env variables used for Gaia multilocale support
 LOCALE_BASEDIR=$(abspath gaia-l10n)

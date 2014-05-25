@@ -1,4 +1,4 @@
-# Copyright (c) 2012, The Linux Foundation. All rights reserved.
+# Copyright (c) 2012,2014 The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -41,3 +41,19 @@ $(AAPT):
 
 include $(LOCAL_PATH)/updater/Android.mk \
         $(LOCAL_PATH)/jsmin/Android.mk
+
+# Populate GAIA_DISTRIBUTION_DIR prior to the Gaia sub-build
+gaia/profile.tar.gz: $(GAIA_DISTRIBUTION_DIR)/.exist
+$(GAIA_DISTRIBUTION_DIR)/.exist:
+	mkdir -p $(@D)
+	touch $@
+
+define mk_gaia_distribution_file
+$(GAIA_DISTRIBUTION_DIR)/.exist: $2
+$2: $1
+	mkdir -p $$(@D)
+	cp $$< $$@
+endef
+
+$(foreach file,$(GAIA_DISTRIBUTION_SRC_FILES),\
+  $(eval $(call mk_gaia_distribution_file, $(file), $(GAIA_DISTRIBUTION_DIR)/$(notdir $(file)))))

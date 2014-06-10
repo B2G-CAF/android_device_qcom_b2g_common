@@ -3,7 +3,7 @@
 # Attempt to identify the Android tree in use.  On success one or more
 # tree identifiers are output to stdout.
 #
-# Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+# Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -39,7 +39,7 @@ fi
 TREEID=
 if [[ -f .repo/manifest.xml ]] ; then
    # Tokenize <default revision="x_y_z"/> by '_'
-   TOKENS=$(repo manifest | sed -e \ '/<default.*/!d ; s/^.*revision="// ; s/".*$// ; s/refs\/tags\/// ; s/.*\/// ; s/_/ /g;')
+   TOKENS=$(repo info -l .repo/manifest | sed -e \ '/merge.*/!d ; s/^.*branch:"// ; s/.*b2g_//g;')
 
    MANIFEST_ID=
    for T in $TOKENS; do

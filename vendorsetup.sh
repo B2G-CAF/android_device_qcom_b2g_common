@@ -68,6 +68,9 @@ __abandon_tree()
 __patch_tree()
 {
    (
+      export GIT_COMMITTER_NAME=nobody
+      export GIT_COMMITTER_EMAIL=nobody
+
       cd $(gettop)
       local TREE_ID=${B2G_TREE_ID:-$(${B2G_TREEID_SH})}
 

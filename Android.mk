@@ -42,6 +42,9 @@ $(AAPT):
 include $(LOCAL_PATH)/updater/Android.mk \
         $(LOCAL_PATH)/jsmin/Android.mk
 
+
+ifdef GAIA_DISTRIBUTION_DIR
+
 # Populate GAIA_DISTRIBUTION_DIR prior to the Gaia sub-build
 gaia/profile.tar.gz: $(GAIA_DISTRIBUTION_DIR)/.exist
 $(GAIA_DISTRIBUTION_DIR)/.exist:
@@ -57,3 +60,5 @@ endef
 
 $(foreach file,$(GAIA_DISTRIBUTION_SRC_FILES),\
   $(eval $(call mk_gaia_distribution_file, $(file), $(GAIA_DISTRIBUTION_DIR)/$(notdir $(file)))))
+
+endif

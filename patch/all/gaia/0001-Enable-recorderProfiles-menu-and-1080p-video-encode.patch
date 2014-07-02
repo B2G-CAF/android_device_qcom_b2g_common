@@ -1,0 +1,57 @@
+From 745279593eaa8f962bdf849015f6ab8541dcc4db Mon Sep 17 00:00:00 2001
+From: Bhargav Gurappadi <bhargavg1@codeaurora.org>
+Date: Wed, 2 Jul 2014 13:00:47 -0700
+Subject: [PATCH] Enable recorderProfiles menu and 1080p video encode
+
+Per Mozilla UX design on v1.4, the recorderProfiles menu is disabled by default
+Also 1080p video resolution is explicitly disabled due to bug 987068.
+
+This patch reverses enables these two settings in our internal builds because:
+1) 1080p works fine on 8926, and enabling doesn't cause issues on 8x10 or 7x27a
+2) The recorderProfiles menu is very useful when debugging why a video
+recording failed.  For example currently on 7x27a, our camera HAL
+reports that we can support up to 720p video so the camera application by
+default selects the maximum resolution.  However in reality we can only
+support up to CIF.  Without the recorderProfiles menu enabled it would
+have taken much longer to root cause such a problem.
+
+Change-Id: Id74a6e00f6fa96fa0ccf9e72968153969012f6bc
+---
+ apps/camera/js/config/config.js | 14 +++++++-------
+ 1 file changed, 7 insertions(+), 7 deletions(-)
+
+diff --git a/apps/camera/js/config/config.js b/apps/camera/js/config/config.js
+index b14da89..41a2559 100644
+--- a/apps/camera/js/config/config.js
++++ b/apps/camera/js/config/config.js
+@@ -209,7 +209,7 @@ module.exports = {
+     header: 'video-resolution-header',
+     icon: 'icon-video-size',
+     options: [],
+-    exclude: ['high', '1080p'],
++    // exclude: ['high', '1080p'],
+     persistent: true,
+     optionsLocalizable: false,
+   },
+@@ -360,12 +360,12 @@ module.exports = {
+       {
+         key: 'timer'
+       },
+-      // {
+-      //   key: 'pictureSizes'
+-      // },
+-      // {
+-      //   key: 'recorderProfiles'
+-      // },
++      {
++        key: 'pictureSizes'
++      },
++      {
++        key: 'recorderProfiles'
++      },
+       {
+         key: 'grid'
+       }
+-- 
+1.8.2.1
+

@@ -1,4 +1,6 @@
-# Copyright (c) 2012,2014 The Linux Foundation. All rights reserved.
+#!/usr/bin/env python
+
+# Copyright (c) 2014, The Linux Foundation. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are
@@ -25,39 +27,42 @@
 # OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 # IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+def usage():
+  print """
+Merge two JSON files into a single file
+Usage: mergeJSON [input file 1] [input file 2] [output file]
+"""
 
-LOCAL_PATH:= $(call my-dir)
+import sys
 
-FAKETOOLS_DX := $(abspath $(LOCAL_PATH)/faketools/dx)
-FAKETOOLS_AAPT := $(abspath $(LOCAL_PATH)/faketools/aapt)
+if len(sys.argv) < 2 or sys.argv[1] == '-h':
+  usage()
+  sys.exit(0)
 
-$(DX):
-	mkdir -p $(@D)
-	ln -sf $(FAKETOOLS_DX) $@
+if len(sys.argv) < 4:
+  print('error: please provide input and output files')
+  usage()
+  sys.exit(1)
 
-$(AAPT):
-	mkdir -p $(@D)
-	ln -sf $(FAKETOOLS_AAPT) $@
+baseA = sys.argv[1]
+baseB = sys.argv[2]
+merge = sys.argv[3]
 
-include $(call all-subdir-makefiles)
+import json
+from pprint import pprint
 
+dictA = None
+with open(baseA) as f:
+  dictA = json.load(f)
 
-ifdef GAIA_DISTRIBUTION_DIR
+dictB = None
+with open(baseB) as f:
+  dictB = json.load(f)
 
-# Populate GAIA_DISTRIBUTION_DIR prior to the Gaia sub-build
-gaia/profile.tar.gz: $(GAIA_DISTRIBUTION_DIR)/.exist
-$(GAIA_DISTRIBUTION_DIR)/.exist:
-	mkdir -p $(@D)
-	touch $@
+dictMerge = {key: value for (key, value)
+  in (dictA.items() + dictB.items())}
 
-define mk_gaia_distribution_file
-$(GAIA_DISTRIBUTION_DIR)/.exist: $2
-$2: $1
-	mkdir -p $$(@D)
-	cp $$< $$@
-endef
+with open(merge, 'w') as f:
+  json.dump(dictMerge, f)
 
-$(foreach file,$(GAIA_DISTRIBUTION_SRC_FILES),\
-  $(eval $(call mk_gaia_distribution_file, $(file), $(GAIA_DISTRIBUTION_DIR)/$(notdir $(file)))))
-
-endif
+print('Merged ' + str(baseA) + ' and ' + str(baseB) + ' into ' + str(merge))

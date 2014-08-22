@@ -26,7 +26,7 @@ index b14da89..41a2559 100644
 +++ b/apps/camera/js/config/config.js
 @@ -209,7 +209,7 @@ module.exports = {
      header: 'video-resolution-header',
-     icon: 'icon-video-size',
+     icon: 'video-size',
      options: [],
 -    exclude: ['high', '1080p'],
 +    // exclude: ['high', '1080p'],

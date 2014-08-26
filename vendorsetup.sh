@@ -241,8 +241,8 @@ __patch_tree()
 }
 
 # Stub out all java compilation.
-export JAVA_HOME=$(gettop)/device/qcom/b2g_common/faketools/jdk
-export ANDROID_JAVA_HOME=${JAVA_HOME}
+#export JAVA_HOME=$(gettop)/device/qcom/b2g_common/faketools/jdk
+#export ANDROID_JAVA_HOME=${JAVA_HOME}
 
 flash()
 {

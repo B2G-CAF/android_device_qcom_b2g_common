@@ -30,7 +30,7 @@ ENABLE_LIBRECOVERY ?= true
 include gonk-misc/b2g.mk
 include external/moztt/fonts.mk
 TARGET_PROVIDES_INIT_RC :=
-PRODUCT_PACKAGES := $(filter-out fakeappops rilproxy oom-msg-logger,$(PRODUCT_PACKAGES))
+PRODUCT_PACKAGES := $(filter-out fakeappops oom-msg-logger,$(PRODUCT_PACKAGES))
 PRODUCT_PACKAGES += librecovery_updater_qcom
 
 PRODUCT_PROPERTY_OVERRIDES += \

@@ -84,6 +84,7 @@ endif
 # environment variables may be found at:
 #   https://developer.mozilla.org/en-US/docs/Mozilla/Firefox_OS/Building#Building_multilocale
 #
+B2G_LANGUAGE_PACK ?= full
 
 ifeq ($(strip $(B2G_LANGUAGE_PACK)),basecamp)
 # Locales to enable for Gaia

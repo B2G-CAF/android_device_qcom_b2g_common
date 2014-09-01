@@ -1,0 +1,22 @@
+From d0e3c68d82a9b350cbd27580fe24e93e09fe8c82 Mon Sep 17 00:00:00 2001
+From: Michael Vines <mvines@codeaurora.org>
+Date: Mon, 1 Sep 2014 20:07:34 -0700
+Subject: [PATCH] Bug 1061388 - Explicitly mention $PYTHON when invoking
+ config.status
+
+diff --git a/build/subconfigure.py b/build/subconfigure.py
+index 46454d0..ab400d6 100644
+--- a/build/subconfigure.py
++++ b/build/subconfigure.py
+@@ -320,7 +320,7 @@ def run(data_file, objdir):
+             print 'running config.status in %s' % os.path.relpath(objdir,
+                 os.getcwd())
+             sys.stdout.flush()
+-        ret = subprocess.call([data['shell'], '-c', './config.status'],
++        ret = subprocess.call([data['shell'], '-c', '$PYTHON ./config.status'],
+             cwd=objdir, env=data['env'])
+ 
+         for f in contents:
+-- 
+1.8.5.2 (Apple Git-48)
+

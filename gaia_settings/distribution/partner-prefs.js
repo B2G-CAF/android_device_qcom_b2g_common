@@ -26,5 +26,7 @@ WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE
 OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN
 IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 */
+pref("media.navigator.load_adapt.avg_seconds", 10);
+pref("media.navigator.load_adapt.high_load","0.95");
 pref("media.peerconnection.video.h264_enabled", true);
 pref("media.peerconnection.video.max_bitrate", 600);

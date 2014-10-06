@@ -103,6 +103,9 @@ GAIA_DEFAULT_LOCALE=en-US
 MOZ_CHROME_MULTILOCALE=cs de hr hu pl sr ro
 endif
 
+# Target-specific Gecko configuration
+# Enable DSP-based EC/NS for webRTC
+GECKO_CONFIGURE_ARGS+=--enable-hardware-aec-ns
 
 # Env variables used for Gaia multilocale support
 LOCALE_BASEDIR=$(abspath gaia-l10n)

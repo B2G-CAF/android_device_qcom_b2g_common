@@ -110,7 +110,7 @@ LOCALES_FILE=locales/languages_full.json
 # Default Gaia locale
 GAIA_DEFAULT_LOCALE=en-US
 # Locales to enable for Gecko
-MOZ_CHROME_MULTILOCALE=ar cs de el en-US es-ES fr hr hu pl pt-BR ro sk sr zh-TW
+MOZ_CHROME_MULTILOCALE=ar cs de el en-US es-ES fr hr hu nl pl pt-BR ro ru sk sr tr zh-TW
 endif
 
 # Target-specific Gecko configuration
